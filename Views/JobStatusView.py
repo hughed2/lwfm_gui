@@ -75,23 +75,25 @@ class JobStatusWidget(QWidget):
         self.liveUpdate() # Trigger live updates
         
     def updateTable(self, startTimestamp, endTimestamp):
-        if self.parent().parent().getSite() is not None:
-            site = self.parent().parent().getSite()
+        site = self.parent().parent().getSite()
+        if site is not None:
             site = Site.getSiteInstanceFactory(site)
             runDriver = site.getRunDriver()
             self.jobList = runDriver.getJobList(startTimestamp, endTimestamp)
 
             # Table widgets work by creating a list of lists, so construct one out of our job list
             numDisplayed = min(len(self.jobList), 50) # Display the first 50--should be more modular for pagination
-            displayedJobs = self.jobList[0:numDisplayed] 
+            displayedJobs = self.jobList[0:numDisplayed]
             self.table.setRowCount(numDisplayed)
 
             # Each cell needs to be added individually, so do a nested loop
             # These column names currently match DT4D results, but we need to make sure they match lwfm results            
             columns = ["id", "userSSO", "status", "jobName"]
             for idx, job in enumerate(displayedJobs):
-                for idx2, column in enumerate(columns):
-                    self.table.setItem(idx, idx2, QTableWidgetItem(job[column]))
+                self.table.setItem(idx, 0, QTableWidgetItem(job.getJobContext().getNativeId()))
+                self.table.setItem(idx, 1, QTableWidgetItem('USERNAME (not part of lwfm)'))
+                self.table.setItem(idx, 2, QTableWidgetItem(job.getNativeStatusStr()))
+                self.table.setItem(idx, 3, QTableWidgetItem(job.getJobContext().getName()))
                     
             # We might not have a full set of 50, so clear the rest of the contents
             for idx in range(numDisplayed, 50):
