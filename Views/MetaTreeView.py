@@ -4,6 +4,8 @@ import json
 import requests
 from datetime import datetime
 
+from widgets.FilteredTable import FilteredTable
+
 from PyQt6.QtWidgets import (QWidget, QDateTimeEdit, QCalendarWidget,
                              QHBoxLayout, QVBoxLayout,
                              QPushButton, QDialog,
@@ -45,7 +47,7 @@ class MetaTreeViewWidget(QWidget):
         layout.addWidget(self.mtv_header)
 #-------Main Page
         self.mtv = QtWidgets.QWidget()
-        self.mtv.setObjectName("mtv")
+        self.mtv.setProperty("class", "mtv")
 
         self.main_layout = QtWidgets.QVBoxLayout(self.mtv)
 
@@ -72,12 +74,15 @@ class MetaTreeViewWidget(QWidget):
 
         self.mtv_layout = QtWidgets.QHBoxLayout(self.mtv_form)
         self.mtv_layout.setSpacing(0)
+        self.mtv_layout.setContentsMargins(10, 10, 10, 10)
 
         self.mtv_tree = QtWidgets.QTreeWidget(self.mtv)
         self.mtv_layout.addWidget(self.mtv_tree)
         
-        self.table = QtWidgets.QTableWidget()
-        self.table.cellClicked.connect(self.cellClicked)
+        data = []
+        headers = ["File Name", "ID", "Date", "File Size", "Metadata"]
+        self.table = FilteredTable(data, headers)
+        self.table.rowClicked.connect(self.rowClicked)
         self.mtv_layout.addWidget(self.table)
 
         self.main_layout.addWidget(self.mtv_form)
@@ -108,6 +113,7 @@ class MetaTreeViewWidget(QWidget):
         self.btnLayout.addWidget(self.end_date)
 
         self.submitButton = QPushButton("Create Tree", self)
+        self.submitButton.setProperty("class", "btn-primary")
         self.submitButton.clicked.connect(self.submit)
         self.btnLayout.addWidget(self.submitButton)
 
@@ -132,6 +138,7 @@ class MetaTreeViewWidget(QWidget):
     def submit(self):
         #Remove the previous tree if it exists
         self.mtv_tree.clear()
+        self.table.update_data([])
         #Getting the top level fields to create the top level part of the tree
         field = self.tree_inputs_layout.itemAt(0).widget().get_tree_field()
         contains = self.tree_inputs_layout.itemAt(0).widget().get_contains_field()
@@ -171,6 +178,9 @@ class MetaTreeViewWidget(QWidget):
 
         #The tree item expand doesn't provide the column (tree level) of the item, we will need to know so that we know
         #which input field its associated with to get the next set of values of its children.
+        for i in reversed(range(it.childCount())):
+            it.removeChild(it.child(i))
+
         column_index = 0
         parent = it.parent()
         while(parent):
@@ -209,7 +219,6 @@ class MetaTreeViewWidget(QWidget):
                 nextItem = QtWidgets.QTreeWidgetItem(child)
     def get_values(self, field, contains="", metadata={}):
         s = requests.Session()
-        print(contains)
         values = s.post("https://dt4dapi.research.ge.com/api/v0/search/get/fieldValues",
                       headers={"Authorization":"Bearer " + "0003Ho7NNOnEGA27ZgvECfMnOyb8", "Content-Type" : "application/json"},
                       json = {
@@ -263,16 +272,15 @@ class MetaTreeViewWidget(QWidget):
         self.sheets = sheets
         numDisplayed = min(len(sheets), 50) # Display the first 50--should be more modular for pagination
         displayedJobs = sheets[0:numDisplayed] 
-        self.table.setRowCount(numDisplayed)
         #loop through the sheets provided and insert them into the file browser table
+        data = []
         for idx, sheet in enumerate(sheets):
-            self.table.setItem(idx, 0, QTableWidgetItem(str(sheet.getName())))
-            self.table.setItem(idx, 1, QTableWidgetItem(str(sheet.getId())))
-            self.table.setItem(idx, 2, QTableWidgetItem(str(datetime.fromtimestamp(sheet.getTimestamp()/1000))))
-            self.table.setItem(idx, 3, QTableWidgetItem(str(sheet.getSize())))
-            self.table.setItem(idx, 4, QTableWidgetItem(str(sheet.getMetadata())))
+            data.append([str(sheet.getName()), str(sheet.getId()), 
+                str(datetime.fromtimestamp(sheet.getTimestamp()/1000)), str(sheet.getSize()), str(sheet.getMetadata())])
 
-    def cellClicked(self, row, column):
+        self.table.update_data(data)
+
+    def rowClicked(self, row):
         #when file browser cell is clicked, we open the modal to display details of that file and provide a download button.
         DocumentModalWidget(self, self.sheets[row]).exec()
 
@@ -284,241 +292,207 @@ class MetaTreeViewWidget(QWidget):
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         sizePolicy.setHeightForWidth(self.mtv_header.sizePolicy().hasHeightForWidth())
         self.mtv_header.setSizePolicy(sizePolicy)
-        self.mtv_header.setMinimumSize(QtCore.QSize(500, 54))
-        self.mtv_header.setMaximumSize(QtCore.QSize(max_size, 54))
-        self.mtv_header.setStyleSheet("background-color: rgb(0, 151, 255);color: rgb(255, 255, 255);font: 24pt \"Helvetica Neue\"")
-        self.mtv_header.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.mtv_header.setObjectName("mtv_header")
-        self.mtv_header.setFont(font)
+        self.mtv_header.setProperty("class", "header")
         self.mtv_header.setText("Meta Tree View")
 
 #-------Main Page
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
-        self.main_layout.setObjectName("main_layout")
+        self.main_layout.setProperty("class", "main_layout")
 
         self.tree_form_layout.setContentsMargins(10, 10, 10, 10)
-        self.tree_form_layout.setObjectName("tree_inputs_layout")
+        self.tree_form_layout.setProperty("class", "tree_inputs_layout")
 
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
         sizePolicy.setHeightForWidth(self.scroll.sizePolicy().hasHeightForWidth())
         self.scroll.setSizePolicy(sizePolicy)
-        self.scroll.setFixedHeight(300)
-        self.scroll.setFixedWidth(720)
         self.scroll.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.scroll.setWidgetResizable(True)
-        self.scroll.setObjectName("scroll")
+        self.scroll.setProperty("class", "scroll")
 
-        self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
+        self.scrollAreaWidgetContents.setProperty("class", "scrollAreaWidgetContents")
 
         self.tree_inputs_layout.setContentsMargins(0, 0, 0, 0)
-        self.tree_inputs_layout.setObjectName("tree_inputs_layout")
+        self.tree_inputs_layout.setProperty("class", "tree_inputs_layout")
 
-        self.add_button.setMinimumSize(QtCore.QSize(30, 30))
-        self.add_button.setMaximumSize(QtCore.QSize(30, 30))
-        self.add_button.setObjectName("add_button")
-        self.add_button.setStyleSheet("color:green; font-size:18px; font-weight:bold;")
+        self.add_button.setProperty("class", "add_button")
         self.add_button.setText("+")
 
-        self.mtv_tree.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.mtv_tree.setFrameShape(QtWidgets.QFrame.Shape.Panel)
-        self.mtv_tree.setObjectName("mtv_tree")
-        self.mtv_tree.setMaximumWidth(300)
+        self.mtv_tree.setProperty("class", "mtv_tree")
         self.mtv_tree.setHeaderLabel("")
         self.mtv_tree.setSortingEnabled(True)
         self.mtv_tree.itemClicked.connect(self.treeItemClick)
         self.mtv_tree.itemExpanded.connect(self.treeItemExpand)
         self.mtv_tree.itemCollapsed.connect(self.treeItemCollapse)
 
-        self.table.setGeometry(QtCore.QRect(380, 0, 401, 431))
-        self.table.setObjectName("tableWidget")
-        self.table.setColumnCount(5)
-        self.table.horizontalHeader().setDefaultSectionSize(190)
-        self.table.setSortingEnabled(True)
-        self.table.setHorizontalHeaderLabels(["File Name", "ID", "Date", "File Size", "Metadata"])
-        self.table.verticalHeader().setVisible(False)
+        # self.table.setGeometry(QtCore.QRect(380, 0, 401, 431))
+        # self.table.setProperty("class", "tableWidget")
+        # self.table.setColumnCount(5)
+        # self.table.horizontalHeader().setDefaultSectionSize(190)
+        # self.table.setSortingEnabled(True)
+        # self.table.setHorizontalHeaderLabels(["File Name", "ID", "Date", "File Size", "Metadata"])
+        # self.table.verticalHeader().setVisible(False)
 
 #-------Footer
-        self.footer.setStyleSheet("background-color: rgb(0, 151, 255);")
         self.footer.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         self.footer.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.footer.setObjectName("footer")
+        self.footer.setProperty("class", "footer")
 
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(self.footer.sizePolicy().hasHeightForWidth())
         self.footer.setSizePolicy(sizePolicy)
-        self.footer.setMaximumSize(QtCore.QSize(max_size, 54))
 
-        self.footerLayoutWidget.setObjectName("footerLayoutWidget")
+        self.footerLayoutWidget.setProperty("class", "footerLayoutWidget")
 
         self.btnLayout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
         self.btnLayout.setContentsMargins(0, 0, 0, 0)
-        self.btnLayout.setObjectName("horizontalLayout")
+        self.btnLayout.setProperty("class", "horizontalLayout")
 
-        self.tenant_label.setObjectName("tenant_label")
-        self.tenant_label.setText("Tenant:")
-        self.tenant_label.setStyleSheet("color: rgb(255, 255, 255);")
+        self.tenant_label.setProperty("class", "footer_label")
+        self.tenant_label.setText("Tenant")
 
-        self.tenant_selection.setObjectName("tenant_selection")
+        self.tenant_selection.setProperty("class", "tenant_selection")
+        self.tenant_selection.setProperty("class", "dropdown_input")
         self.tenant_selection.addItem("GroupA")
         self.tenant_selection.addItem("GroupB")
         self.tenant_selection.addItem("GroupC")
         self.tenant_selection.addItem("GroupD")
-        self.tenant_selection.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.tenant_selection.setMinimumSize(QtCore.QSize(150, 25))
 
-        self.start_label.setObjectName("start_label")
-        self.start_label.setText("Start:")
-        self.start_label.setStyleSheet("color: rgb(255, 255, 255);")
+        self.start_label.setProperty("class", "footer_label")
+        self.start_label.setText("Start")
 
         self.start_date.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.PlusMinus)
         self.start_date.setCalendarPopup(True)
-        self.start_date.setObjectName("start_date")
-        self.start_date.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.start_date.setProperty("class", "start_date")
 
-        self.end_label.setObjectName("end_label")
-        self.end_label.setText("End:")
-        self.end_label.setStyleSheet("color: rgb(255, 255, 255);")
+        self.end_label.setProperty("class", "footer_label")
+        self.end_label.setText("End")
 
         self.end_date.setProperty("showGroupSeparator", False)
         self.end_date.setCalendarPopup(True)
-        self.end_date.setObjectName("end_date")
-        self.end_date.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.end_date.setProperty("class", "end_date")
 
-        self.submitButton.setMaximumSize(QtCore.QSize(90, 30))
-        self.submitButton.setStyleSheet("background-color: rgb(255, 255, 255);")
-
-        self.file_browser_button.setObjectName("add_button")
-        self.file_browser_button.setMaximumSize(QtCore.QSize(150, 30))
-        self.file_browser_button.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.file_browser_button.setProperty("class", "add_button")
         self.file_browser_button.setText("Choose File")
 
 class TreeInput(QWidget):
 
-        name = "Tree Input"
-    
-        def __init__(self, parent, field=None):
-            super().__init__(parent)
+    name = "Tree Input"
 
-            layout = QVBoxLayout()
-            layout.setSpacing(0)
-            layout.setContentsMargins(10, 10, 10, 10)
+    def __init__(self, parent, field=None):
+        super().__init__(parent)
 
-            self.tree_input_frame = QtWidgets.QWidget()
-            self.treeInputWidget = QtWidgets.QWidget(self.tree_input_frame)
-            self.tree_input_layout = QtWidgets.QHBoxLayout(self.treeInputWidget)
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(5, 10, 5, 10)
 
-            self.removeLayout = QtWidgets.QVBoxLayout(self.treeInputWidget)
-            self.removeLayout.setSpacing(0)
+        self.tree_input_frame = QtWidgets.QWidget()
+        self.treeInputWidget = QtWidgets.QWidget(self.tree_input_frame)
+        self.tree_input_layout = QtWidgets.QHBoxLayout(self.treeInputWidget)
 
-            self.remove_button = QtWidgets.QPushButton(self.treeInputWidget)
-            self.remove_button.clicked.connect(self.remove_input)
-            self.removeLayout.addWidget(self.remove_button)
+        self.removeLayout = QtWidgets.QVBoxLayout(self.treeInputWidget)
+        self.removeLayout.setSpacing(0)
 
-            verticalSpacer = QSpacerItem(20, 40, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
-            self.removeLayout.addItem(verticalSpacer)
+        self.remove_button = QtWidgets.QPushButton(self.treeInputWidget)
+        self.remove_button.clicked.connect(self.remove_input)
+        self.removeLayout.addWidget(self.remove_button)
 
-            self.tree_input_layout.addLayout(self.removeLayout)
+        verticalSpacer = QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
+        self.removeLayout.addItem(verticalSpacer)
 
-            self.field_layout = QtWidgets.QHBoxLayout()
-            
-            self.tree_field_label = QtWidgets.QLabel(self.treeInputWidget)
-            self.field_layout.addWidget(self.tree_field_label)
+        self.tree_input_layout.addLayout(self.removeLayout)
 
-            self.tree_field = QtWidgets.QTextEdit(self.treeInputWidget)
-            self.field_layout.addWidget(self.tree_field)
-            
-            self.tree_input_layout.addLayout(self.field_layout)
+        self.field_layout = QtWidgets.QHBoxLayout()
 
-            self.contains_layout = QtWidgets.QHBoxLayout()
+        self.spacerItem = QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
+        self.field_layout.addItem(self.spacerItem)
+        
+        self.tree_field_label = QtWidgets.QLabel(self.treeInputWidget)
+        self.field_layout.addWidget(self.tree_field_label)
 
-            self.contains_label = QtWidgets.QLabel(self.treeInputWidget)
-            self.contains_layout.addWidget(self.contains_label)
+        self.tree_field = QtWidgets.QTextEdit(self.treeInputWidget)
+        self.field_layout.addWidget(self.tree_field)
+        
+        self.tree_input_layout.addLayout(self.field_layout)
 
-            self.contains_input = QtWidgets.QTextEdit(self.treeInputWidget)
-            self.contains_layout.addWidget(self.contains_input)
+        self.contains_layout = QtWidgets.QHBoxLayout()
 
-            self.tree_input_layout.addLayout(self.contains_layout)
+        self.contains_label = QtWidgets.QLabel(self.treeInputWidget)
+        self.contains_layout.addWidget(self.contains_label)
 
-            self.setObjectName("tree_input_")
+        self.contains_input = QtWidgets.QTextEdit(self.treeInputWidget)
+        self.contains_layout.addWidget(self.contains_input)
 
-            layout.addWidget(self.tree_input_frame)
+        self.tree_input_layout.addLayout(self.contains_layout)
 
-            self.setStyles(field)
+        self.setProperty("class", "tree_input_")
 
-            self.setLayout(layout) 
+        layout.addWidget(self.tree_input_frame)
+        layout.setContentsMargins(0, 0, 0, 0)
 
-        def get_tree_field(self):
-            return self.tree_field.toPlainText()
+        self.setStyles(field)
 
-        def get_contains_field(self):
-            return self.contains_input.toPlainText()
+        self.setLayout(layout) 
 
-        def remove_input(self):
-            self.deleteLater()
+    def get_tree_field(self):
+        return self.tree_field.toPlainText()
 
-        def setStyles(self, field):
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(self.tree_input_frame.sizePolicy().hasHeightForWidth())
-            self.tree_input_frame.setSizePolicy(sizePolicy)
-            self.tree_input_frame.setObjectName("tree_input_frame")
-            self.tree_input_frame.setFixedSize(QtCore.QSize(700, 90))
-            self.tree_input_frame.setStyleSheet("background-color: rgb(175, 173, 176); margin: 0px 10px;")
+    def get_contains_field(self):
+        return self.contains_input.toPlainText()
 
-            self.treeInputWidget.setObjectName("horizontalLayoutWidget_2")
-            self.treeInputWidget.setFixedSize(QtCore.QSize(660, 70))
+    def remove_input(self):
+        self.deleteLater()
 
-            self.tree_input_layout.setSpacing(0)
-            self.tree_input_layout.setObjectName("tree_input_layout")
+    def setStyles(self, field):
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.tree_input_frame.sizePolicy().hasHeightForWidth())
+        self.tree_input_frame.setSizePolicy(sizePolicy)
+        self.tree_input_frame.setProperty("class", "tree_input_frame")    
 
-            self.remove_button.setFixedSize(QtCore.QSize(40, 20))
-            self.remove_button.setStyleSheet("font-size:12px; color:white; background-color:red; border-style: hidden; border-width: 2px; border-radius: 5px;")
+        self.treeInputWidget.setProperty("class", "tree_input_widget")
 
-            self.remove_button.setText("X")
+        self.tree_input_layout.setSpacing(0)
+        self.tree_input_layout.setProperty("class", "tree_input_layout")
 
-            self.tree_field.setFixedSize(QtCore.QSize(210, 30))
-            self.tree_field.setStyleSheet("background-color: rgb(255, 255, 255);")
-            self.tree_field.setObjectName("tree_field")
+        self.remove_button.setProperty("class", "remove_button")
+        self.remove_button.setText("X")
 
-            self.field_layout.setObjectName("field_layout")
-            
-            self.tree_field_label.setObjectName("tree_field_label")
-            self.tree_field_label.setText("Field:")
-            if field:
-                self.tree_field.setText(field)
+        self.tree_field.setProperty("class", "text_input")
 
-            self.contains_layout.setObjectName("contains_layout")
+        self.field_layout.setProperty("class", "field_layout")
+        
+        self.tree_field_label.setProperty("class", "label")
+        self.tree_field_label.setText("Field:")
+        if field:
+            self.tree_field.setText(field)
 
-            self.contains_label.setObjectName("contains_label")
-            self.contains_label.setText("Contains(optional):")
+        self.contains_layout.setProperty("class", "contains_layout")
 
-            self.contains_input.setFixedSize(QtCore.QSize(210, 30))
-            self.contains_input.setStyleSheet("background-color: rgb(255, 255, 255);")
-            self.contains_input.setObjectName("contains_input")
+        self.contains_label.setProperty("class", "label")
+        self.contains_label.setText("Contains(optional):")
 
-            self.setFixedSize(QtCore.QSize(710, 90))
+        self.contains_input.setProperty("class", "text_input")
+
+        self.setProperty("class", "tree_input")
 
 class DocumentModalWidget(QDialog):
     def __init__(self, parent, sheet):
         super().__init__(parent)
         self.sheet = sheet
 
-        self.resize(500, 210)
+        self.resize(500, 220)
         
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
         
         doc_info_header = QLabel("Document Details", self)
-        doc_info_header.setMaximumSize(QtCore.QSize(900, 54))
-        doc_info_header.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        doc_info_header.setStyleSheet("background-color: rgb(1, 26, 40);\n"
-"color: rgb(255, 255, 255);\n"
-"font: 24pt \"Helvetica Neue\";")
+        doc_info_header.setProperty("class", "modal_header")
         self.layout.addWidget(doc_info_header)
         self.table = QTableWidget()
         self.table.setColumnCount(2)
@@ -569,10 +543,9 @@ class DocumentModalWidget(QDialog):
         self.layout.addWidget(self.table)
 
         self.download_button = QtWidgets.QPushButton()
-        print(sheet)
+        self.download_button.setProperty("class", "btn-primary-blue")
         self.download_button.clicked.connect(self.downloadFile)
         self.download_button.setText("Download")
-        self.download_button.setMinimumWidth(100)
 
         self.layout.addWidget(self.layout.addWidget(self.download_button))
         
@@ -581,5 +554,3 @@ class DocumentModalWidget(QDialog):
     def downloadFile(self):
         #opens up a file browser and downloads the file to the directory chosen.
         filePath = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
-        print(self.parent().repoDriver.get(self.sheet, filePath))
-

@@ -1,0 +1,188 @@
+
+.header {
+    background-color: rgb(0, 151, 255);
+    color: rgb(255, 255, 255);
+    font: 24pt;
+    min-height: 54px;
+    max-width: 10000px;
+    qproperty-alignment: AlignCenter;
+}
+
+.footer {
+    background-color: rgb(0, 151, 255);
+    max-width: 10000px;
+    min-height: 54px;
+}
+
+.btn-primary {
+    padding: 0 8px;
+    border-color: #0055cc #0055cc #003580;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    border-radius: 5px;
+    background-color: white;
+    min-height: 30px;
+}
+
+.btn-primary {
+    padding: 0 8px;
+    border-color: #0055cc #0055cc #003580;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    border-radius: 5px;
+    background-color: blue;
+    min-height: 30px;
+}
+
+.footer_label {
+    color: white;
+    font-size: 16px;
+}
+
+.label {
+	font-size: 14px;
+}
+
+.modal_header {
+    background-color: rgb(1, 26, 40);
+    color: rgb(255, 255, 255);
+    font: 24pt;
+    min-width: 600px;
+    min-height: 40px;
+    qproperty-alignment: AlignCenter;
+}
+
+/* Set the height and width of the QDateTimeEdit */
+QDateTimeEdit {
+    height: 25px;
+    width: 150px;
+    padding: 2px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Set the background color and border radius of the dropdown button */
+QDateTimeEdit::drop-down {
+    image: url(icons/down.png);
+    min-width: 25px;
+    min-height: 25px;
+    background-color: #f8f9fa;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+QCalendarWidget QWidget{
+	background-color:white;			
+}
+
+#qt_calendar_prevmonth {
+	border: none;
+    icon-size: 25px;
+    qproperty-icon: url(icons/left-arrow.png);
+}
+#qt_calendar_nextmonth {
+	border: none;
+    icon-size: 25px;
+    qproperty-icon: url(icons/right-arrow.png);
+}
+
+QTableView {
+	border: 1px solid #aaa;
+}
+
+/* Set the height and width of the QComboBox */
+QComboBox {
+height: 25px;
+width: 150px;
+padding: 2px;
+border: 1px solid #ccc;
+border-radius: 5px;
+background-color: #f8f9fa;
+selection-background-color: #e5eaF8;
+}
+
+/* Set the background color and border radius of the dropdown button */
+QComboBox::drop-down {
+image: url(icons/down.png);
+min-width: 25px;
+min-height: 25px;
+background-color: #f8f9fa;
+border: 1px solid #ccc;
+border-radius: 5px;
+}
+
+/* Set the background color and border radius of the dropdown list */
+QComboBox::drop-down::menu {
+background-color: #f8f9fa;
+border: 1px solid #ccc;
+border-radius: 5px;
+}
+
+/* Set the color of the items in the dropdown list */
+QComboBox::item {
+color: #212529;
+}
+
+/* Set the background color of the selected item in the dropdown list */
+QComboBox::item:selected {
+background-color: #e5eaF8;
+}
+
+/* Set the color of the arrow icon */
+QComboBox::down-arrow {
+image: url(icons/down.png);
+color: black;
+}
+
+QTreeWidget {
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  padding: 3px;
+}
+
+QTreeWidget::item {
+  height: 30px;
+  border-bottom: 1px solid #ced4da;
+}
+
+QTreeWidget::item:hover, QTreeWidget::item:selected {
+  background-color: rgb(229, 234, 248);
+  color: #212529;
+}
+
+QHeaderView::section {
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  padding: 5px;
+  font-weight: bold;
+  text-align: center;
+}
+
+QTableWidget {
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+}
+
+QTableWidget::item {
+  height: 30px;
+  border: 1px solid #ced4da;
+}
+
+QTableWidget::item:hover, QTableWidget::item:selected {
+  background-color: rgb(229, 234, 248)
+  color: #212529;
+}
+
+QHeaderView::section {
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  padding: 5px;
+  font-weight: bold;
+}
+
+QTableCornerButton::section {
+  background-color: #f8f9fa;
+  border: none;
+  border-right: 1px solid #ced4da;
+  border-bottom: 1px solid #ced4da;
+}

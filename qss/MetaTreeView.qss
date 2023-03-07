@@ -1,0 +1,88 @@
+.add_button {
+    background-color:green; 
+    color:white;
+    font-size:18px; 
+    font-weight:bold;
+    border-radius: 5px;
+    width: 20px;
+    max-width: 20px;
+    height: 15px;
+    padding: 3px 5px 5px 5px;
+}
+
+.mtv_tree {
+    background-color: rgb(255, 255, 255);
+    max-width: 300px;
+    border: 1px solid #aaa;
+}
+
+.table {
+    max-height: 1000px;
+    max-height: 1000px;
+    margin: 0 10px 10px 0;
+}
+
+.start_date {
+    background-color: rgb(255, 255, 255);
+}
+
+.end_date {
+    background-color: rgb(255, 255, 255);
+}
+
+.file_browser_button {
+    background-color: rgb(255, 255, 255);
+    min-width: 150px;
+    min-height: 30px;
+}
+
+.scrollAreaWidgetContents{
+    background-color: rgb(170, 170, 173);
+    border: 1px solid #777;
+}
+
+.scroll{
+    max-width: 690px;
+    max-height: 300px;
+}
+
+.tree_input_frame {
+    background-color: rgb(229, 234, 248); 
+    margin: 0px 10px; 
+    border-radius: 10px;
+    border: 1px solid #777;
+    min-width: 670px;
+    min-height: 70px;
+}
+
+tree_input_widget{
+    min-width: 630px;
+    min-height: 70px;
+}
+
+.remove_button {
+    font-size:12px; 
+    color:white; 
+    background-color:red; 
+    border-style: hidden; 
+    border-width: 2px; 
+    border-radius: 5px;
+    margin:0px 5px;
+    padding: 1px 3px;
+}
+
+.text_input {
+    background-color: rgb(255, 255, 255);
+    border-radius: 10px;
+    margin: 0px 10px;
+    padding: 2px 2px 0px 2px;
+    text-align: center;
+    max-width: 210px;
+    max-height: 30px;
+}
+
+.tree_input {
+    min-width: 690px;
+    min-height: 90px;
+    margin: 0;
+}
