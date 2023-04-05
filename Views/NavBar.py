@@ -1,5 +1,12 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QSpacerItem
+from PyQt6.QtGui import QColor
+
+from lwfm.base.Site import Site
+
+from widgets.MultiSelectComboBox import MultiSelectComboBox
+
+from Utils import msgBox
 
 class NavBar(QWidget):
     name = "NavBar"
@@ -17,7 +24,6 @@ class NavBar(QWidget):
         self.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 102, 581))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.verticalLayoutWidget.setMaximumSize(QtCore.QSize(150, 10000))
-        self.verticalLayoutWidget.setStyleSheet("background-color: rgb(1, 26, 40);")
         self.navLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.navLayout.setContentsMargins(0, 0, 0, 0)
         self.navLayout.setSpacing(0)
@@ -35,6 +41,19 @@ class NavBar(QWidget):
         self.logo.setScaledContents(True)
         self.logo.setObjectName("logo")
         self.navLayout.addWidget(self.logo)
+        self.verticalLayoutWidget.setStyleSheet("color: rgb(1, 26, 40); background-color: rgb(1, 26, 40);")
+        self.siteSelection = MultiSelectComboBox()
+        self.siteSelection.setProperty("class", "site_selection")
+        self.siteSelection.currentIndexChanged.connect(self.siteSelected)
+        self.siteSelection.addItem("Select Sites")
+        self.siteSelection.addItem("dt4d")
+        self.siteSelection.addItem("cori")
+        self.siteSelection.addItem("perlmutter")
+        self.siteSelection.addItem("local")
+        self.siteSelection.setFixedWidth(150)
+
+        self.navLayout.addWidget(self.siteSelection)
+
         self.navbar = QtWidgets.QListWidget(self.verticalLayoutWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         sizePolicy.setHorizontalStretch(0)
@@ -42,11 +61,8 @@ class NavBar(QWidget):
         sizePolicy.setHeightForWidth(self.navbar.sizePolicy().hasHeightForWidth())
         self.navbar.setSizePolicy(sizePolicy)
         self.navbar.setMaximumSize(QtCore.QSize(150, 10000))
-        self.navbar.setAcceptDrops(False)
-        self.navbar.setAutoFillBackground(False)
         self.navbar.setStyleSheet("font: 14pt \"Helvetica Neue\";\n"
 "background-color: rgb(1, 26, 40);\n"
-"alternate-background-color: rgb(193, 255, 255);\n"
 "selection-background-color: rgb(1, 26, 40);\n"
 "selection-color: rgb(170, 245, 255);")
         self.navbar.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
@@ -66,10 +82,10 @@ class NavBar(QWidget):
         self.navbar.itemClicked.connect(self.listwidgetclicked)
 
         item = QtWidgets.QListWidgetItem()
-        item.setForeground(QtGui.QColor(255, 255, 255))
-        item.setFont(font)
-        item.setText(_translate("MainWindow", "Set Site"))
-        self.navbar.addItem(item)
+        # item.setForeground(QtGui.QColor(255, 255, 255))
+        # item.setFont(font)
+        # item.setText(_translate("MainWindow", "Set Site"))
+        #self.navbar.addItem(item)
         item = QtWidgets.QListWidgetItem()
         item.setForeground(QtGui.QColor(255, 255, 255))
         item.setFont(font)
@@ -91,7 +107,30 @@ class NavBar(QWidget):
         item.setText(_translate("MainWindow", "Graph"))
         self.navbar.addItem(item)
         self.navLayout.addWidget(self.navbar)
-        self.setLayout(self.navLayout)
+        self.setLayout(self.navLayout)        
 
     def listwidgetclicked(self, item):
         self.parent().parent().changePage(self.navbarIndices[item.text()])
+
+    def siteSelected(self, i):
+        if i > 0:
+            selection = self.siteSelection.currentText()
+            if selection in self.parent().parent().getSite():
+                self.parent().parent().removeSite(selection)
+            else:
+                site = Site.getSiteInstanceFactory(selection)
+                if not isinstance(site, Site):
+                    msgBox("ERROR: NON-EXISTING SITE SELECTED. PLEASE REPORT ERROR TO LWFM DEVS", self)
+                    return
+                    
+                authDriver = site.getAuthDriver()
+                if not authDriver.isAuthCurrent():
+                    self.siteSelection.hide()
+                    authDriver.login()
+                    if not authDriver.isAuthCurrent():
+                        msgBox(f"ERROR: Could not log in to site {selection}", self)
+                        self.parent().parent().setSite(None)
+                        return
+                msgBox(f"Successfully logged in to site {selection}", self)
+                self.siteSelection.show()
+                self.parent().parent().setSite(selection)

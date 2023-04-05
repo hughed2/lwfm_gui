@@ -91,7 +91,7 @@ class SiteWidget(QWidget):
             authDriver.login()
             if not authDriver.isAuthCurrent():
                 msgBox(f"ERROR: Could not log in to site {b.text()}", self)
-                self.parent().parent().parent().setSite(None)
+                self.parent().parent().setSite(None)
                 return
         msgBox(f"Successfully logged in to site {b.text()}", self)
-        self.parent().parent().parent().setSite(b.text())
+        self.parent().parent().setSite(b.text())

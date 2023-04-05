@@ -6,18 +6,12 @@ from PyQt6.QtWidgets import (QWidget, QDateTimeEdit, QCalendarWidget,
                              QPushButton, QDialog, QSpacerItem,
                              QLabel, QTableWidget, QTableWidgetItem, QTableView)
 from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtGui import QIcon, QPixmap
 from widgets.FilteredTable import FilteredTable
 from PyQt6.QtCore import QDateTime
+from PyQt6.QtCore import Qt
 
 from lwfm.base.Site import Site
-
-font = QtGui.QFont()
-font.setFamily("Helvetica Neue")
-
-table_width = 10000
-column_width = 300
-table_height = 10000
-column_count = 7
 
 class JobStatusWidget(QWidget):
     name = "Job Status"
@@ -25,43 +19,59 @@ class JobStatusWidget(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.setMaximumSize(QtCore.QSize(table_width, table_height))
+        self.setMaximumSize(QtCore.QSize(10000, 10000))
+
+        self.live = QIcon("icons/green-circle.png")
+        self.not_live = QIcon("icons/red-circle.png")
 
         layout = QVBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
 
-        self.header = QtWidgets.QLabel()
+        #How can I get the contents of the header centered in the headerWrapperLayout?
 
-        layout.addWidget(self.header)
+        self.headerWrapper = QtWidgets.QWidget()
+        self.headerWrapperLayout = QtWidgets.QHBoxLayout(self.headerWrapper)
+        self.headerWrapperLayout.setContentsMargins(0, 0, 0, 0)
+        self.header = QtWidgets.QWidget()
+        self.headerLayout = QtWidgets.QHBoxLayout(self.header)
+        self.headerLabel = QtWidgets.QLabel("Job Status")
+        self.headerLabel.setProperty("class", "header")
+        self.headerLayout.addWidget(self.headerLabel)
+        self.liveIndicator = QtWidgets.QWidget()
+        self.liveIndicatorLayout = QtWidgets.QHBoxLayout(self.liveIndicator)
+        self.liveIndicatorLabel = QtWidgets.QLabel("Live Data")
+        self.indicator = QtWidgets.QLabel()
+        self.liveIndicatorLayout.addWidget(self.liveIndicatorLabel)
+        self.liveIndicatorLayout.addWidget(self.indicator)
+        self.headerLayout.addWidget(self.liveIndicator)
+        self.headerWrapperLayout.addWidget(self.header)
+        self.headerWrapperLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(self.headerWrapper)
 
         data = []
-        headers = ["ID", "Status", "Job Name", "User Name", "Group", "Compute Type", "Timestamp"]
+        headers = ["ID", "Status", "Site Name", "Job Name", "User Name", "Group", "Compute Type", "Timestamp"]
         self.table = FilteredTable(data, headers)
         self.table.rowClicked.connect(self.rowClicked)
-
 
         layout.addWidget(self.table)
 
         self.footer = QtWidgets.QFrame()
 
-        # We have multiple buttons we want side by side, so put them in an HBoxLayout
-        #btnLayout = QHBoxLayout()
-
-        self.horizontalLayoutWidget = QtWidgets.QWidget(self.footer)
-        self.btnLayout = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget)
+        self.btnLayout = QtWidgets.QHBoxLayout(self.footer)
 
         # Start Time and End Time need a date and time, and set beginning and end points for our display        
         self.startLabel = QLabel("Start time", self)
 
         self.btnLayout.addWidget(self.startLabel)        
-        self.startDate = QDateTimeEdit(QDateTime.currentDateTime())
+        self.startDate = QtWidgets.QDateTimeEdit(QDateTime.currentDateTime())
         self.btnLayout.addWidget(self.startDate)
 
         self.endLabel = QLabel("End time", self)
         self.btnLayout.addWidget(self.endLabel)
-        self.endDate = QDateTimeEdit(QDateTime.currentDateTime())
+        self.endDate = QtWidgets.QDateTimeEdit(QDateTime.currentDateTime())
         self.btnLayout.addWidget(self.endDate)
         
         # Submit updates our display to use supplied times
@@ -73,9 +83,6 @@ class JobStatusWidget(QWidget):
         self.clearButton = QPushButton("Clear", self)
         self.clearButton.clicked.connect(self.liveUpdate)
         self.btnLayout.addWidget(self.clearButton)
-
-        self.spacerItem = QSpacerItem(40, 20, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
-        self.btnLayout.addItem(self.spacerItem)
         
         layout.addWidget(self.footer)
 
@@ -88,31 +95,33 @@ class JobStatusWidget(QWidget):
     def updateTable(self, startTimestamp, endTimestamp):
         if self.parent().parent().parent():
             if self.parent().parent().parent().getSite() is not None:
-                site = self.parent().parent().parent().getSite()
-                site = Site.getSiteInstanceFactory(site)
-                runDriver = site.getRunDriver()
-                self.jobList = runDriver.getJobList(startTimestamp, endTimestamp)
-
-                # Table widgets work by creating a list of lists, so construct one out of our job list
-                numDisplayed = min(len(self.jobList), 50) # Display the first 50--should be more modular for pagination
-                displayedJobs = self.jobList[0:numDisplayed] 
-
+                data = []
                 # Each cell needs to be added individually, so do a nested loop
                 # These column names currently match DT4D results, but we need to make sure they match lwfm results            
-                columns = ["workflowId", "status", "jobName", "userSSO", "group", "computeType", "localTimestamp"]
-                data = []
-                for idx, job in enumerate(displayedJobs):
-                    row = []
-                    for idx2, column in enumerate(columns):
-                        row.append(job[column])
-                    data.append(row)
+                columns = ["workflowId", "status", "siteName", "jobName", "userSSO", "group", "computeType", "localTimestamp"]
+                sites = self.parent().parent().parent().getSite()
+                for site in sites:
+                    site = Site.getSiteInstanceFactory(site)
+                    runDriver = site.getRunDriver()
+                    self.jobList = runDriver.getJobList(startTimestamp, endTimestamp)
+                    # Table widgets work by creating a list of lists, so construct one out of our job list
+                    if self.jobList:
+                        numDisplayed = min(len(self.jobList), 50) # Display the first 50--should be more modular for pagination
+                        displayedJobs = self.jobList[0:numDisplayed]
+                        for job in displayedJobs:
+                            context = job.getJobContext()
+                            data.append([context.getId(), job.getStatus().value, context.getSiteName(), context.getName(), context.getUser(), context.getGroup(), context.getComputeType(), job.getReceivedTime()])
                 self.table.update_data(data)
 
     def rowClicked(self, row):
         JobStatusModalWidget(self, self.jobList[row]).exec()
 
 
-    def liveUpdate(self):
+    def liveUpdate(self):  
+        pixmap = self.live.pixmap(15, 15)
+        image = pixmap.toImage()
+        new_pixmap = QPixmap.fromImage(image)
+        self.indicator.setPixmap(new_pixmap)
         curTime = int(time.time() * 1000)
         self.updateTable(curTime - (2 * 60 * 60 * 1000), curTime) # we'll do an update from two hours ago to now
         self.liveTimer = threading.Timer(5, JobStatusWidget.liveUpdate, args=(self,))
@@ -120,34 +129,51 @@ class JobStatusWidget(QWidget):
         self.liveTimer.start()
         
     def submit(self):
-        self.liveTimer.cancel() # Deactivate the timer for live updates
-        
         startTimestamp = self.startDate.dateTime().toMSecsSinceEpoch() # This will get the msecs to midnight of the selected day
         
         endTimestamp = self.endDate.dateTime().toMSecsSinceEpoch() # This will get the msecs to midnight of the selected day
 
+        curTime = int(time.time() * 1000)
+        
+        if curTime > endTimestamp:
+            pixmap = self.not_live.pixmap(15, 15)
+            image = pixmap.toImage()
+            new_pixmap = QPixmap.fromImage(image)
+            self.indicator.setPixmap(new_pixmap)
+
+            self.liveTimer.cancel() # Deactivate the timer for live updates
+        else:
+            pixmap = self.live.pixmap(15, 15)
+            image = pixmap.toImage()
+            new_pixmap = QPixmap.fromImage(image)
+            self.indicator.setPixmap(new_pixmap)
+
         self.updateTable(startTimestamp, endTimestamp)  
-
-
         
     def setStyles(self):        
-        self.header.setGeometry(QtCore.QRect(-2, 10, 751, 54))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         sizePolicy.setHeightForWidth(self.header.sizePolicy().hasHeightForWidth())
         self.header.setSizePolicy(sizePolicy)
-        self.header.setMaximumSize(QtCore.QSize(table_width, 54))
         self.header.setStyleSheet("background-color: rgb(0, 151, 255);color: rgb(255, 255, 255);")
-        self.header.setFont(font)
-        self.header.setText("Job Status")
-        self.header.setProperty("class", "header")
 
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
-        sizePolicy.setHeightForWidth(self.header.sizePolicy().hasHeightForWidth())
+        self.headerWrapper.setProperty("class", "header")
+        self.headerWrapper.setContentsMargins(0, 0, 0, 0)
 
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
-        sizePolicy.setHeightForWidth(self.table.sizePolicy().hasHeightForWidth())
-        self.table.setSizePolicy(sizePolicy)
-        self.table.setMaximumSize(QtCore.QSize(table_width, 10000))
+        self.headerLayout.setSpacing(40)
+        self.headerLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.liveIndicatorLayout.setSpacing(5)
+        self.liveIndicatorLayout.setContentsMargins(0, 0, 0, 0)
+
+        table_view = self.table.get_table_view()
+        table_view.setColumnWidth(0, 280)
+        table_view.setColumnWidth(1, 150)
+        table_view.setColumnWidth(2, 150)
+        table_view.setColumnWidth(3, 250)
+        table_view.setColumnWidth(4, 130)
+        table_view.setColumnWidth(5, 130)
+        table_view.setColumnWidth(6, 230)
+        table_view.setColumnWidth(7, 250)
 
         self.footer.setGeometry(QtCore.QRect(0, 530, 741, 61))
         self.footer.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
@@ -159,28 +185,24 @@ class JobStatusWidget(QWidget):
         self.footer.setSizePolicy(sizePolicy)
         self.footer.setProperty("class", "footer")
 
-        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(0, 10, 741, 41))
-
-        self.btnLayout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
         self.btnLayout.setContentsMargins(0, 0, 0, 0)
+        self.btnLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.startLabel.setProperty("class", "footer_label")
-        self.startLabel.setFont(font)
         self.startLabel.setStyleSheet("color: rgb(255, 255, 255);")
-        self.startLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         self.startDate.setCalendarPopup(True)
         self.startDate.setCalendarWidget(QCalendarWidget())
         self.startDate.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.startDate.setProperty("class", "start_date")
 
         self.endLabel.setProperty("class", "footer_label")
-        self.endLabel.setFont(font)
         self.endLabel.setStyleSheet("color: rgb(255, 255, 255);")
-        self.endLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         self.endDate.setCalendarPopup(True)
         self.endDate.setCalendarWidget(QCalendarWidget())
         self.endDate.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.endDate.setProperty("class", "end_date")
 
         self.submitButton.setProperty("class", "btn-primary")
         self.submitButton.setStyleSheet("background-color: rgb(255, 255, 255);")
@@ -192,7 +214,7 @@ class JobStatusModalWidget(QDialog):
     def __init__(self, parent, job):
         super().__init__(parent)
 
-        self.resize(600, 305)
+        self.resize(600, 335)
         
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
@@ -205,7 +227,7 @@ class JobStatusModalWidget(QDialog):
 
         self.table = QTableWidget()
         self.table.setColumnCount(2)
-        self.table.setRowCount(9)
+        self.table.setRowCount(10)
         self.table.horizontalHeader().setVisible(False)
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setDefaultSectionSize(300)
@@ -231,42 +253,49 @@ class JobStatusModalWidget(QDialog):
         item.setText("Job Name:")
         self.table.setItem(5, 0, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText("Compute Type:")
+        item.setText("Site:")
         self.table.setItem(6, 0, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText("Set ID:")
+        item.setText("Compute Type:")
         self.table.setItem(7, 0, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText("Time Stamp:")
+        item.setText("Set ID:")
         self.table.setItem(8, 0, item)
+        item = QtWidgets.QTableWidgetItem()
+        item.setText("Time Stamp:")
+        self.table.setItem(9, 0, item)
 
         item = QtWidgets.QTableWidgetItem()
-        item.setText(job["workflowId"])
+        context = job.getJobContext()
+        item.setText(context.getId())
         self.table.setItem(0, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(job["parentWorkflowId"])
+        item.setText(context.getParentJobId())
         self.table.setItem(1, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(job["originatorWorkflowId"])
+        item.setText(context.getOriginJobId())
         self.table.setItem(2, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(job["userSSO"])
+        item.setText(context.getUser())
         self.table.setItem(3, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(job["group"])
+        item.setText(context.getGroup())
         self.table.setItem(4, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(job["jobName"])
+        item.setText(context.getName())
         self.table.setItem(5, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(job["computeType"])
+        item.setText(context.getSiteName())
         self.table.setItem(6, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(job["partOfSet"])
+        item.setText(context.getComputeType())
         self.table.setItem(7, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(job["localTimestamp"])
+        item.setText(context.getJobSetId())
         self.table.setItem(8, 1, item)
+        item = QtWidgets.QTableWidgetItem()
+        item.setText(job.getReceivedTime().strftime("%Y-%m-%d %H:%M:%S"))
+        self.table.setItem(9, 1, item)
 
         self.layout.addWidget(self.table)
         
