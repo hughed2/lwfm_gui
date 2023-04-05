@@ -31,13 +31,15 @@ class MetaTreeViewWidget(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        if self.parent().parent().getSite() is not None and len(self.parent().parent().getSite()) > 0:
-            site = self.parent().parent().getSite()
-            site = Site.getSiteInstanceFactory(site[0])
-            self.repoDriver = site.getRepoDriver()
-        else:
-            site = Site.getSiteInstanceFactory("dt4d")
-            self.repoDriver = site.getRepoDriver()
+        # if self.parent().parent().getSite() is not None and len(self.parent().parent().getSite()) > 0:
+        #     site = self.parent().parent().getSite()
+        #     site = Site.getSiteInstanceFactory(site[0])
+        #     self.repoDriver = site.getRepoDriver()
+        # else:
+        #     site = Site.getSiteInstanceFactory("dt4d")
+        #     self.repoDriver = site.getRepoDriver()
+        
+        site = Site.getSiteInstanceFactory("dt4d")
 
         layout = QVBoxLayout()
         layout.setSpacing(0)
@@ -45,41 +47,71 @@ class MetaTreeViewWidget(QWidget):
         layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
 #-------Header
         self.mtv_header = QtWidgets.QLabel()
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
+        sizePolicy.setHeightForWidth(self.mtv_header.sizePolicy().hasHeightForWidth())
+        self.mtv_header.setSizePolicy(sizePolicy)
+        self.mtv_header.setProperty("class", "header")
+        self.mtv_header.setText("Meta Tree View")
         layout.addWidget(self.mtv_header)
 #-------Main Page
         self.mtv = QtWidgets.QWidget()
         self.mtv.setProperty("class", "mtv")
 
         self.main_layout = QtWidgets.QVBoxLayout(self.mtv)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        self.main_layout.setProperty("class", "main_layout")
 
         self.tree_form = QtWidgets.QWidget()
+        self.tree_form.setFixedHeight(290)
+        self.tree_form.setProperty("class", "tree_form")
 
         self.tree_form_layout = QtWidgets.QVBoxLayout(self.tree_form)
 
         self.tree_form_input = QtWidgets.QWidget()
+        self.tree_form_input.setProperty("class", "tree_form_input")
 
         self.tree_form_input_layout = QtWidgets.QVBoxLayout(self.tree_form_input)
+        self.tree_form_input_layout.setProperty("class", "tree_form_input_layout")
+        self.tree_form_input_layout.setContentsMargins(0, 0, 0, 0)
+        self.tree_form_input_layout.setSpacing(0)
 
         self.scroll = QScrollArea(self)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
+        sizePolicy.setHeightForWidth(self.scroll.sizePolicy().hasHeightForWidth())
+        self.scroll.setSizePolicy(sizePolicy)
+        self.scroll.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.scroll.setWidgetResizable(True)
+        self.scroll.setProperty("class", "scroll")
         self.scroll.setFixedHeight(250)
         self.scroll.setFixedWidth(585)
         self.scrollWidget = QtWidgets.QWidget()
+        self.scrollWidget.setProperty("class", "scrollWidget")
+
+        self.tree_form_layout.setContentsMargins(5, 0, 5, 0)
+
+        self.tree_form_layout.setSpacing(0)
+        self.tree_form_layout.setProperty("class", "tree_form_layout")
 
         self.tree_inputs_layout = QtWidgets.QVBoxLayout(self.scrollWidget)
-        self.tree_form_input_layout.setContentsMargins(0, 0, 0, 0)
-        self.tree_form_input_layout.setSpacing(0)
+        self.tree_inputs_layout.setContentsMargins(0, 5, 0, 5)
+        self.tree_inputs_layout.setSpacing(5)
+        self.tree_inputs_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.tree_inputs_layout.setProperty("class", "tree_inputs_layout")      
        
         self.scroll.setWidget(self.scrollWidget)
 
         self.tree_form_layout.addWidget(self.scroll)
 
         self.add_button = QtWidgets.QPushButton()
+        self.add_button.setProperty("class", "add_button")
+        self.add_button.setText("+")
         self.add_button.clicked.connect(self.add_input)
 
         self.tree_form_layout.addWidget(self.add_button)
 
         self.mtv_form = QtWidgets.QWidget()
+        self.mtv_form.setFixedHeight(290)
 
         self.mtv_layout = QtWidgets.QHBoxLayout(self.mtv_form)
         self.mtv_layout.setSpacing(0)
@@ -88,11 +120,24 @@ class MetaTreeViewWidget(QWidget):
         self.mtv_layout.addWidget(self.tree_form)
 
         self.mtv_tree = QtWidgets.QTreeWidget(self.mtv)
+        self.mtv_tree.setFrameShape(QtWidgets.QFrame.Shape.Panel)
+        self.mtv_tree.setProperty("class", "mtv_tree")
+        self.mtv_tree.setHeaderLabel("")
+        self.mtv_tree.setSortingEnabled(True)
+        self.mtv_tree.itemClicked.connect(self.treeItemClick)
+        self.mtv_tree.itemExpanded.connect(self.treeItemExpand)
+        self.mtv_tree.itemCollapsed.connect(self.treeItemCollapse)
         self.mtv_layout.addWidget(self.mtv_tree)
         
         data = []
         headers = ["File Name", "ID", "Date", "File Size", "Metadata"]
         self.table = FilteredTable(data, headers)
+        table_view = self.table.get_table_view()
+        table_view.setColumnWidth(0, 250)
+        table_view.setColumnWidth(1, 280)
+        table_view.setColumnWidth(2, 250)
+        table_view.setColumnWidth(3, 100)
+        table_view.setColumnWidth(4, 450)
         self.table.rowClicked.connect(self.rowClicked)
 
         self.main_layout.addWidget(self.mtv_form)
@@ -102,25 +147,54 @@ class MetaTreeViewWidget(QWidget):
         layout.addWidget(self.mtv)
 #-------Footer
         self.footer = QtWidgets.QFrame()
+        self.footer.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        self.footer.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
+        self.footer.setProperty("class", "footer")
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(1)
+        sizePolicy.setHeightForWidth(self.footer.sizePolicy().hasHeightForWidth())
+        self.footer.setSizePolicy(sizePolicy)
 
         self.btnLayout = QtWidgets.QHBoxLayout(self.footer)
+        self.btnLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.tenant_label = QtWidgets.QLabel()
+        self.tenant_label.setProperty("class", "footer_label")
+        self.tenant_label.setText("Tenant")
         self.btnLayout.addWidget(self.tenant_label)
 
         self.tenant_selection = QtWidgets.QComboBox()
+        self.tenant_selection.setProperty("class", "dropdown_input")
+        self.tenant_selection.addItem("GroupA")
+        self.tenant_selection.addItem("GroupB")
+        self.tenant_selection.addItem("GroupC")
+        self.tenant_selection.addItem("GroupD")
+        self.tenant_selection.setFixedWidth(150)
         self.btnLayout.addWidget(self.tenant_selection)
         
         self.start_label = QtWidgets.QLabel()
+        self.start_label.setProperty("class", "footer_label")
+        self.start_label.setText("Start")
+        
         self.btnLayout.addWidget(self.start_label)
         
         self.start_date = QtWidgets.QDateTimeEdit(QDateTime.currentDateTime())
+        self.start_date.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.PlusMinus)
+        self.start_date.setCalendarPopup(True)
+        self.start_date.setProperty("class", "start_date")
         self.btnLayout.addWidget(self.start_date)
 
         self.end_label = QtWidgets.QLabel()
+        self.end_label.setProperty("class", "footer_label")
+        self.end_label.setText("End")
+
         self.btnLayout.addWidget(self.end_label)
         
         self.end_date = QtWidgets.QDateTimeEdit(QDateTime.currentDateTime())
+        self.end_date.setProperty("showGroupSeparator", False)
+        self.end_date.setCalendarPopup(True)
+        self.end_date.setProperty("class", "end_date")
         self.btnLayout.addWidget(self.end_date)
 
         self.submitButton = QPushButton("Create Treee", self)
@@ -129,8 +203,6 @@ class MetaTreeViewWidget(QWidget):
         self.btnLayout.addWidget(self.submitButton)
         
         layout.addWidget(self.footer)
-
-        self.setStyles()
 
         self.setLayout(layout)
 
@@ -288,100 +360,6 @@ class MetaTreeViewWidget(QWidget):
     def getRepoDriver(self):
         return self.repoDriver
 
-    def setStyles(self):
-#-------Header
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
-        sizePolicy.setHeightForWidth(self.mtv_header.sizePolicy().hasHeightForWidth())
-        self.mtv_header.setSizePolicy(sizePolicy)
-        self.mtv_header.setProperty("class", "header")
-        self.mtv_header.setText("Meta Tree View")
-
-#-------Main Page
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-        self.main_layout.setSpacing(0)
-        self.main_layout.setProperty("class", "main_layout")
-
-        self.tree_form.setProperty("class", "tree_form")
-
-        self.tree_form_input.setProperty("class", "tree_form_input")
-
-        self.tree_form_input_layout.setProperty("class", "tree_form_input_layout")
-
-        self.tree_form_layout.setContentsMargins(5, 0, 5, 0)
-        self.tree_form_layout.setSpacing(0)
-        self.tree_form_layout.setProperty("class", "tree_form_layout")
-
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
-        sizePolicy.setHeightForWidth(self.scroll.sizePolicy().hasHeightForWidth())
-        self.scroll.setSizePolicy(sizePolicy)
-        self.scroll.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setProperty("class", "scroll")
-
-        self.scrollWidget.setProperty("class", "scrollWidget")
-
-        self.tree_inputs_layout.setContentsMargins(0, 5, 0, 5)
-        self.tree_inputs_layout.setSpacing(5)
-        self.tree_inputs_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.tree_inputs_layout.setProperty("class", "tree_inputs_layout")
-
-        self.tree_form_input_layout.setProperty("class", "tree_form_input_layout")
-
-        self.add_button.setProperty("class", "add_button")
-        self.add_button.setText("+")
-
-        self.mtv_tree.setFrameShape(QtWidgets.QFrame.Shape.Panel)
-        self.mtv_tree.setProperty("class", "mtv_tree")
-        self.mtv_tree.setHeaderLabel("")
-        self.mtv_tree.setSortingEnabled(True)
-        self.mtv_tree.itemClicked.connect(self.treeItemClick)
-        self.mtv_tree.itemExpanded.connect(self.treeItemExpand)
-        self.mtv_tree.itemCollapsed.connect(self.treeItemCollapse)
-
-        table_view = self.table.get_table_view()
-        table_view.setColumnWidth(0, 250)
-        table_view.setColumnWidth(1, 280)
-        table_view.setColumnWidth(2, 250)
-        table_view.setColumnWidth(3, 100)
-        table_view.setColumnWidth(4, 450)
-
-#-------Footer
-        self.footer.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.footer.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.footer.setProperty("class", "footer")
-
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(1)
-        sizePolicy.setHeightForWidth(self.footer.sizePolicy().hasHeightForWidth())
-        self.footer.setSizePolicy(sizePolicy)
-
-        self.btnLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.tenant_label.setProperty("class", "footer_label")
-        self.tenant_label.setText("Tenant")
-
-        self.tenant_selection.setProperty("class", "dropdown_input")
-        self.tenant_selection.addItem("GroupA")
-        self.tenant_selection.addItem("GroupB")
-        self.tenant_selection.addItem("GroupC")
-        self.tenant_selection.addItem("GroupD")
-        self.tenant_selection.setFixedWidth(150)
-
-        self.start_label.setProperty("class", "footer_label")
-        self.start_label.setText("Start")
-
-        self.start_date.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.PlusMinus)
-        self.start_date.setCalendarPopup(True)
-        self.start_date.setProperty("class", "start_date")
-
-        self.end_label.setProperty("class", "footer_label")
-        self.end_label.setText("End")
-
-        self.end_date.setProperty("showGroupSeparator", False)
-        self.end_date.setCalendarPopup(True)
-        self.end_date.setProperty("class", "end_date")
-
 class TreeInput(QWidget):
 
     name = "Tree Input"
@@ -393,38 +371,83 @@ class TreeInput(QWidget):
         layout.setSpacing(0)
 
         self.tree_input_frame = QtWidgets.QWidget()
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.tree_input_frame.sizePolicy().hasHeightForWidth())
+        self.tree_input_frame.setSizePolicy(sizePolicy)
+        self.tree_input_frame.setProperty("class", "tree_input_frame")
+
         self.treeInputWidget = QtWidgets.QWidget(self.tree_input_frame)
+        self.treeInputWidget.setProperty("class", "tree_input_widget")
+
         self.tree_input_layout = QtWidgets.QHBoxLayout(self.treeInputWidget)
+        self.tree_input_layout.setSpacing(0)
+        self.tree_input_layout.setProperty("class", "tree_input_layout")
 
         self.removeLayout = QtWidgets.QVBoxLayout(self.treeInputWidget)
         self.removeLayout.setSpacing(0)
         self.removeLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.remove_button = QtWidgets.QPushButton(self.treeInputWidget)
+        self.remove_button.setProperty("class", "remove_button")
+        self.remove_button.setText("X")
         self.remove_button.clicked.connect(self.remove_input)
         self.removeLayout.addWidget(self.remove_button)
 
         self.tree_input_layout.addLayout(self.removeLayout)
 
         self.field_layout = QtWidgets.QHBoxLayout()
+        self.field_layout.setProperty("class", "field_layout")
 
         self.spacerItem = QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
         self.field_layout.addItem(self.spacerItem)
         
         self.tree_field_label = QtWidgets.QLabel(self.treeInputWidget)
         self.field_layout.addWidget(self.tree_field_label)
+        self.tree_field_label.setProperty("class", "label")
+        self.tree_field_label.setText("Field:")
+
 
         self.tree_field = QtWidgets.QTextEdit(self.treeInputWidget)
+        self.tree_field.setProperty("class", "text_input")
+        if field:
+            self.tree_field.setText(field)
+
+
+
+
+
+        
+        
+        
+        
+
+        
+
+        
+
+        
+
+        
+
+
+
+
         self.field_layout.addWidget(self.tree_field)
         
         self.tree_input_layout.addLayout(self.field_layout)
 
         self.contains_layout = QtWidgets.QHBoxLayout()
+        self.contains_layout.setProperty("class", "contains_layout")
 
         self.contains_label = QtWidgets.QLabel(self.treeInputWidget)
         self.contains_layout.addWidget(self.contains_label)
+        self.contains_label.setProperty("class", "label")
+        self.contains_label.setText("Contains(optional):")
 
         self.contains_input = QtWidgets.QTextEdit(self.treeInputWidget)
+        self.contains_input.setProperty("class", "text_input")
         self.contains_layout.addWidget(self.contains_input)
 
         self.tree_input_layout.addLayout(self.contains_layout)
@@ -434,7 +457,7 @@ class TreeInput(QWidget):
         layout.addWidget(self.tree_input_frame)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.setStyles(field)
+        self.setProperty("class", "tree_input")
 
         self.setLayout(layout) 
 
@@ -446,40 +469,7 @@ class TreeInput(QWidget):
 
     def remove_input(self):
         self.deleteLater()
-
-    def setStyles(self, field):
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.tree_input_frame.sizePolicy().hasHeightForWidth())
-        self.tree_input_frame.setSizePolicy(sizePolicy)
-        self.tree_input_frame.setProperty("class", "tree_input_frame")    
-
-        self.treeInputWidget.setProperty("class", "tree_input_widget")
-
-        self.tree_input_layout.setSpacing(0)
-        self.tree_input_layout.setProperty("class", "tree_input_layout")
-
-        self.remove_button.setProperty("class", "remove_button")
-        self.remove_button.setText("X")
-
-        self.tree_field.setProperty("class", "text_input")
-
-        self.field_layout.setProperty("class", "field_layout")
-        
-        self.tree_field_label.setProperty("class", "label")
-        self.tree_field_label.setText("Field:")
-        if field:
-            self.tree_field.setText(field)
-
-        self.contains_layout.setProperty("class", "contains_layout")
-
-        self.contains_label.setProperty("class", "label")
-        self.contains_label.setText("Contains(optional):")
-
-        self.contains_input.setProperty("class", "text_input")
-
-        self.setProperty("class", "tree_input")
+              
 
 class DocumentModalWidget(QDialog):
     def __init__(self, parent, sheet):

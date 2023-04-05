@@ -32,20 +32,40 @@ class JobStatusWidget(QWidget):
         #How can I get the contents of the header centered in the headerWrapperLayout?
 
         self.headerWrapper = QtWidgets.QWidget()
+        self.headerWrapper.setProperty("class", "header")
+        self.headerWrapper.setContentsMargins(0, 0, 0, 0)
+
         self.headerWrapperLayout = QtWidgets.QHBoxLayout(self.headerWrapper)
         self.headerWrapperLayout.setContentsMargins(0, 0, 0, 0)
+
         self.header = QtWidgets.QWidget()
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
+        sizePolicy.setHeightForWidth(self.header.sizePolicy().hasHeightForWidth())
+        self.header.setSizePolicy(sizePolicy)
+        
         self.headerLayout = QtWidgets.QHBoxLayout(self.header)
+        self.headerLayout.setSpacing(40)
+        self.headerLayout.setContentsMargins(0, 0, 0, 0)
+        
         self.headerLabel = QtWidgets.QLabel("Job Status")
         self.headerLabel.setProperty("class", "header")
         self.headerLayout.addWidget(self.headerLabel)
+        
         self.liveIndicator = QtWidgets.QWidget()
+        
         self.liveIndicatorLayout = QtWidgets.QHBoxLayout(self.liveIndicator)
+        self.liveIndicatorLayout.setSpacing(5)
+        self.liveIndicatorLayout.setContentsMargins(0, 0, 0, 0)
+        
         self.liveIndicatorLabel = QtWidgets.QLabel("Live Data")
+        self.liveIndicatorLabel.setProperty("class", "liveIndicatorLabel")
+        
         self.indicator = QtWidgets.QLabel()
         self.liveIndicatorLayout.addWidget(self.liveIndicatorLabel)
         self.liveIndicatorLayout.addWidget(self.indicator)
+        
         self.headerLayout.addWidget(self.liveIndicator)
+        
         self.headerWrapperLayout.addWidget(self.header)
         self.headerWrapperLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -56,37 +76,67 @@ class JobStatusWidget(QWidget):
         self.table = FilteredTable(data, headers)
         self.table.rowClicked.connect(self.rowClicked)
 
+        table_view = self.table.get_table_view()
+        table_view.setColumnWidth(0, 280)
+        table_view.setColumnWidth(1, 150)
+        table_view.setColumnWidth(2, 150)
+        table_view.setColumnWidth(3, 250)
+        table_view.setColumnWidth(4, 130)
+        table_view.setColumnWidth(5, 130)
+        table_view.setColumnWidth(6, 230)
+        table_view.setColumnWidth(7, 250)
+
         layout.addWidget(self.table)
 
         self.footer = QtWidgets.QFrame()
+        self.footer.setGeometry(QtCore.QRect(0, 530, 741, 61))
+        self.footer.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        self.footer.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(1)
+        sizePolicy.setHeightForWidth(self.footer.sizePolicy().hasHeightForWidth())
+        self.footer.setSizePolicy(sizePolicy)
+        self.footer.setProperty("class", "footer")
 
         self.btnLayout = QtWidgets.QHBoxLayout(self.footer)
+        self.btnLayout.setContentsMargins(0, 0, 0, 0)
+        self.btnLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Start Time and End Time need a date and time, and set beginning and end points for our display        
         self.startLabel = QLabel("Start time", self)
+        self.startLabel.setProperty("class", "footer_label")
 
         self.btnLayout.addWidget(self.startLabel)        
         self.startDate = QtWidgets.QDateTimeEdit(QDateTime.currentDateTime())
+        self.startDate.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.PlusMinus)
+        self.startDate.setCalendarPopup(True)
+        self.startDate.setProperty("class", "startDate")
         self.btnLayout.addWidget(self.startDate)
 
         self.endLabel = QLabel("End time", self)
+        self.endLabel.setProperty("class", "footer_label")
+
         self.btnLayout.addWidget(self.endLabel)
         self.endDate = QtWidgets.QDateTimeEdit(QDateTime.currentDateTime())
+        self.endDate.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.PlusMinus)
+        self.endDate.setCalendarPopup(True)
+        self.endDate.setProperty("class", "startDate")
         self.btnLayout.addWidget(self.endDate)
         
         # Submit updates our display to use supplied times
         self.submitButton = QPushButton("Submit", self)
         self.submitButton.clicked.connect(self.submit)
+        self.submitButton.setProperty("class", "btn-primary")
         self.btnLayout.addWidget(self.submitButton)
         
         # Clear updates our display to go live -- this is the default
         self.clearButton = QPushButton("Clear", self)
         self.clearButton.clicked.connect(self.liveUpdate)
+        self.clearButton.setProperty("class", "btn-primary")
         self.btnLayout.addWidget(self.clearButton)
         
         layout.addWidget(self.footer)
-
-        self.setStyles()
 
         self.setLayout(layout)
         
@@ -106,9 +156,7 @@ class JobStatusWidget(QWidget):
                     self.jobList = runDriver.getJobList(startTimestamp, endTimestamp)
                     # Table widgets work by creating a list of lists, so construct one out of our job list
                     if self.jobList:
-                        numDisplayed = min(len(self.jobList), 50) # Display the first 50--should be more modular for pagination
-                        displayedJobs = self.jobList[0:numDisplayed]
-                        for job in displayedJobs:
+                        for job in self.jobList:
                             context = job.getJobContext()
                             data.append([context.getId(), job.getStatus().value, context.getSiteName(), context.getName(), context.getUser(), context.getGroup(), context.getComputeType(), job.getReceivedTime()])
                 self.table.update_data(data)
@@ -116,14 +164,14 @@ class JobStatusWidget(QWidget):
     def rowClicked(self, row):
         JobStatusModalWidget(self, self.jobList[row]).exec()
 
-
     def liveUpdate(self):  
         pixmap = self.live.pixmap(15, 15)
         image = pixmap.toImage()
         new_pixmap = QPixmap.fromImage(image)
         self.indicator.setPixmap(new_pixmap)
         curTime = int(time.time() * 1000)
-        self.updateTable(curTime - (2 * 60 * 60 * 1000), curTime) # we'll do an update from two hours ago to now
+        startTimestamp = self.startDate.dateTime().toMSecsSinceEpoch()
+        self.updateTable(startTimestamp, curTime) # we'll do an update from two hours ago to now
         self.liveTimer = threading.Timer(5, JobStatusWidget.liveUpdate, args=(self,))
         self.liveTimer.daemon = True # We need to do this or else the thread will keep running even after the app is closed
         self.liveTimer.start()
@@ -149,72 +197,12 @@ class JobStatusWidget(QWidget):
             self.indicator.setPixmap(new_pixmap)
 
         self.updateTable(startTimestamp, endTimestamp)  
-        
-    def setStyles(self):        
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
-        sizePolicy.setHeightForWidth(self.header.sizePolicy().hasHeightForWidth())
-        self.header.setSizePolicy(sizePolicy)
-        self.header.setStyleSheet("background-color: rgb(0, 151, 255);color: rgb(255, 255, 255);")
-
-        self.headerWrapper.setProperty("class", "header")
-        self.headerWrapper.setContentsMargins(0, 0, 0, 0)
-
-        self.headerLayout.setSpacing(40)
-        self.headerLayout.setContentsMargins(0, 0, 0, 0)
-
-        self.liveIndicatorLayout.setSpacing(5)
-        self.liveIndicatorLayout.setContentsMargins(0, 0, 0, 0)
-
-        table_view = self.table.get_table_view()
-        table_view.setColumnWidth(0, 280)
-        table_view.setColumnWidth(1, 150)
-        table_view.setColumnWidth(2, 150)
-        table_view.setColumnWidth(3, 250)
-        table_view.setColumnWidth(4, 130)
-        table_view.setColumnWidth(5, 130)
-        table_view.setColumnWidth(6, 230)
-        table_view.setColumnWidth(7, 250)
-
-        self.footer.setGeometry(QtCore.QRect(0, 530, 741, 61))
-        self.footer.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.footer.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(1)
-        sizePolicy.setHeightForWidth(self.footer.sizePolicy().hasHeightForWidth())
-        self.footer.setSizePolicy(sizePolicy)
-        self.footer.setProperty("class", "footer")
-
-        self.btnLayout.setContentsMargins(0, 0, 0, 0)
-        self.btnLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.startLabel.setProperty("class", "footer_label")
-        self.startLabel.setStyleSheet("color: rgb(255, 255, 255);")
-
-        self.startDate.setCalendarPopup(True)
-        self.startDate.setCalendarWidget(QCalendarWidget())
-        self.startDate.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.startDate.setProperty("class", "start_date")
-
-        self.endLabel.setProperty("class", "footer_label")
-        self.endLabel.setStyleSheet("color: rgb(255, 255, 255);")
-
-        self.endDate.setCalendarPopup(True)
-        self.endDate.setCalendarWidget(QCalendarWidget())
-        self.endDate.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.endDate.setProperty("class", "end_date")
-
-        self.submitButton.setProperty("class", "btn-primary")
-        self.submitButton.setStyleSheet("background-color: rgb(255, 255, 255);")
-
-        self.clearButton.setProperty("class", "btn-primary")
-        self.clearButton.setStyleSheet("background-color: rgb(255, 255, 255);")
 
 class JobStatusModalWidget(QDialog):
     def __init__(self, parent, job):
         super().__init__(parent)
 
-        self.resize(600, 335)
+        self.resize(600, 340)
         
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
