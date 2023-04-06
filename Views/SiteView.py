@@ -21,22 +21,17 @@ class SiteWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
 
-        self.site_header = QtWidgets.QLabel()
-        self.site_header.setGeometry(QtCore.QRect(-2, 10, 751, 54))
+        self.header = QtWidgets.QLabel()
+        self.header.setProperty("class", "header")
+        self.header.setGeometry(QtCore.QRect(-2, 10, 751, 54))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(1)
-        sizePolicy.setHeightForWidth(self.site_header.sizePolicy().hasHeightForWidth())
-        self.site_header.setSizePolicy(sizePolicy)
-        self.site_header.setMaximumSize(QtCore.QSize(10000, 54))
-        self.site_header.setStyleSheet("background-color: rgb(0, 151, 255);\n"
-"color: rgb(255, 255, 255);\n"
-"font: 24pt \"Helvetica Neue\";")
-        self.site_header.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.site_header.setObjectName("site_header")
-        self.site_header.setText(_translate("MainWindow", "Site Selection"))
+        sizePolicy.setHeightForWidth(self.header.sizePolicy().hasHeightForWidth())
+        self.header.setSizePolicy(sizePolicy)
+        self.header.setText(_translate("MainWindow", "Site Selection"))
 
-        layout.addWidget(self.site_header)
+        layout.addWidget(self.header)
 
         self.site_selection_frame = QtWidgets.QFrame()
         self.site_selection_frame.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -69,11 +64,10 @@ class SiteWidget(QWidget):
         layout.addWidget(self.site_selection_frame)
 
         self.footer = QtWidgets.QFrame()
+        self.footer.setProperty("class", "footer")
         self.footer.setGeometry(QtCore.QRect(0, 530, 741, 61))
-        self.footer.setStyleSheet("background-color: rgb(0, 151, 255);")
         self.footer.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         self.footer.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.footer.setObjectName("footer")
 
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         sizePolicy.setHeightForWidth(self.footer.sizePolicy().hasHeightForWidth())
@@ -97,7 +91,7 @@ class SiteWidget(QWidget):
             authDriver.login()
             if not authDriver.isAuthCurrent():
                 msgBox(f"ERROR: Could not log in to site {b.text()}", self)
-                self.parent().parent().parent().setSite(None)
+                self.parent().parent().setSite(None)
                 return
         msgBox(f"Successfully logged in to site {b.text()}", self)
-        self.parent().parent().parent().setSite(b.text())
+        self.parent().parent().setSite(b.text())

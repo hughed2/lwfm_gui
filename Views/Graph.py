@@ -24,7 +24,7 @@ class GraphWidget(QWidget):
         weight = [5.56, 0.5, 0.64, 0.23, 0.9, 3.28, 0.5, 0.45]
 
         # Create adjacency matrix
-        #adjmat = vec2adjmat(source, target, weight=weight)
+        adjmat = vec2adjmat(source, target, weight=weight)
 
         # target  node A  node B  node F  node J  node M  node C  node Z
         # source                                                        
@@ -57,21 +57,16 @@ class GraphWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
 
-        self.triggers_header = QtWidgets.QLabel()
-        self.triggers_header.setGeometry(QtCore.QRect(-2, 10, 751, 54))
+        self.header = QtWidgets.QLabel()
+        self.header.setProperty("class", "header")
+        self.header.setGeometry(QtCore.QRect(-2, 10, 751, 54))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
-        sizePolicy.setHeightForWidth(self.triggers_header.sizePolicy().hasHeightForWidth())
-        self.triggers_header.setSizePolicy(sizePolicy)
-        self.triggers_header.setMaximumSize(QtCore.QSize(10000, 54))
-        self.triggers_header.setStyleSheet("background-color: rgb(0, 151, 255);\n"
-"color: rgb(255, 255, 255);\n"
-"font: 24pt \"Helvetica Neue\";")
-        self.triggers_header.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.triggers_header.setObjectName("triggers_header")
-        self.triggers_header.setFont(font)
-        self.triggers_header.setText(_translate("MainWindow", "Graph"))
+        sizePolicy.setHeightForWidth(self.header.sizePolicy().hasHeightForWidth())
+        self.header.setSizePolicy(sizePolicy)
+        self.header.setFont(font)
+        self.header.setText(_translate("MainWindow", "Graph"))
 
-        layout.addWidget(self.triggers_header)
+        layout.addWidget(self.header)
 
         self.webEngineView = QWebEngineView()
         self.loadPage()
@@ -79,16 +74,14 @@ class GraphWidget(QWidget):
         layout.addWidget(self.webEngineView)
 
         self.footer = QtWidgets.QFrame()
+        self.footer.setProperty("class", "footer")
         self.footer.setGeometry(QtCore.QRect(0, 530, 741, 61))
-        self.footer.setStyleSheet("background-color: rgb(0, 151, 255);")
         self.footer.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         self.footer.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.footer.setObjectName("footer")
 
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         sizePolicy.setHeightForWidth(self.footer.sizePolicy().hasHeightForWidth())
         self.footer.setSizePolicy(sizePolicy)
-        self.footer.setMaximumSize(QtCore.QSize(10000, 54))
 
         layout.addWidget(self.footer)
 

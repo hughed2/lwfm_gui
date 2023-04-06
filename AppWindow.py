@@ -11,7 +11,7 @@ from Views import SiteView, JobStatusView, TriggerView, NavBar, MetaTreeView, Gr
 class MainWindow(QMainWindow):
     stack = None
     toolbar = None
-    currentSite = None
+    currentSites = []
 
     def __init__(self):
         super().__init__()
@@ -20,6 +20,7 @@ class MainWindow(QMainWindow):
 
         self.frameLayoutWidget = QtWidgets.QWidget()
         self.frameLayout = QtWidgets.QHBoxLayout(self.frameLayoutWidget)
+        self.frameLayoutWidget.setAutoFillBackground(False)
         self.frameLayout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
         self.frameLayout.setContentsMargins(0, 0, 0, 0)
         self.frameLayout.setSpacing(0)
@@ -49,11 +50,14 @@ class MainWindow(QMainWindow):
         self.navBar.setDisabled(False)
             
     def setSite(self, site):
-        self.currentSite = site
+        self.currentSites.append(site)
         if site is None:
             self.disableToolbar()
         else:
             self.enableToolbar()
+
+    def removeSite(self, site):
+        self.currentSites.remove(site)
             
     def getSite(self):
-        return self.currentSite
+        return self.currentSites

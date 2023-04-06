@@ -44,21 +44,16 @@ class TriggerWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
 
-        self.triggers_header = QtWidgets.QLabel()
-        self.triggers_header.setGeometry(QtCore.QRect(-2, 10, 751, 54))
+        self.header = QtWidgets.QLabel()
+        self.header.setProperty("class", "header")
+        self.header.setGeometry(QtCore.QRect(-2, 10, 751, 54))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
-        sizePolicy.setHeightForWidth(self.triggers_header.sizePolicy().hasHeightForWidth())
-        self.triggers_header.setSizePolicy(sizePolicy)
-        self.triggers_header.setMaximumSize(QtCore.QSize(table_width, 54))
-        self.triggers_header.setStyleSheet("background-color: rgb(0, 151, 255);\n"
-"color: rgb(255, 255, 255);\n"
-"font: 24pt \"Helvetica Neue\";")
-        self.triggers_header.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.triggers_header.setObjectName("triggers_header")
-        self.triggers_header.setFont(font)
-        self.triggers_header.setText(_translate("MainWindow", "Triggers"))
+        sizePolicy.setHeightForWidth(self.header.sizePolicy().hasHeightForWidth())
+        self.header.setSizePolicy(sizePolicy)
+        self.header.setFont(font)
+        self.header.setText(_translate("MainWindow", "Triggers"))
 
-        layout.addWidget(self.triggers_header)
+        layout.addWidget(self.header)
 
         self.table = QTableWidget()
         self.table.setColumnCount(column_count)
@@ -69,9 +64,9 @@ class TriggerWidget(QWidget):
         self.table.setSortingEnabled(True)
         self.table.setGeometry(QtCore.QRect(0, 60, 749, 471))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
-        sizePolicy.setHeightForWidth(self.triggers_header.sizePolicy().hasHeightForWidth())
-        self.triggers_header.setSizePolicy(sizePolicy)
-        self.triggers_header.setMaximumSize(QtCore.QSize(table_width, 54))
+        sizePolicy.setHeightForWidth(self.header.sizePolicy().hasHeightForWidth())
+        self.header.setSizePolicy(sizePolicy)
+        self.header.setMaximumSize(QtCore.QSize(table_width, 54))
         
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(229, 234, 248))
@@ -102,11 +97,10 @@ class TriggerWidget(QWidget):
         layout.addWidget(self.table)
 
         self.footer = QtWidgets.QFrame()
+        self.footer.setProperty("class", "footer")
         self.footer.setGeometry(QtCore.QRect(0, 530, 741, 61))
-        self.footer.setStyleSheet("background-color: rgb(0, 151, 255);")
         self.footer.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         self.footer.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.footer.setObjectName("footer")
 
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         sizePolicy.setHorizontalStretch(0)
