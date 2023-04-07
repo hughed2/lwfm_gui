@@ -1,0 +1,9 @@
+.logo{
+    background-color: rgb(1, 26, 40);
+    padding:0px 15px;
+}
+
+/* Set the height and width of the QComboBox */
+QComboBox.site_selection {
+    padding: 2px 2px 2px 20px;
+}
