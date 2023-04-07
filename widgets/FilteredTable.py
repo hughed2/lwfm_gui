@@ -37,10 +37,9 @@ class FilterModel(QSortFilterProxyModel):
 
 
 class FilterWidget(QWidget):
-    def __init__(self, view, view_copy, parent=None):
+    def __init__(self, view, parent=None):
         super().__init__(parent)
         self._view = view
-        self._view_copy = view_copy
         self._filters = []
         self._init_ui()
 
@@ -62,18 +61,17 @@ class FilterWidget(QWidget):
     def _on_text_changed(self, text):
         sender = self.sender()
         column = self._filters.index(sender)
-        proxy_model = self._view_copy.model()
+        proxy_model = self._view.model()
         regex = QRegularExpression(text, QRegularExpression.PatternOption.CaseInsensitiveOption)
         proxy_model.setFilterRegex(column, regex)
 
         sender = self.sender()
         column = self._filters.index(sender)
-        proxy_model = self._view_copy.model()
+        proxy_model = self._view.model()
         regex = QRegularExpression(text, QRegularExpression.PatternOption.CaseInsensitiveOption)
         proxy_model.setFilterRegex(column, regex)
+        QTimer.singleShot(500, self._view.viewport().update)
         # create a delay on the filtering so that it won't filter until the user is done typing
-        self._view = self._view_copy
-        QTimer.singleShot(5000, self._view.viewport().update)
 
 # custom widget that contains the filtered table
 class FilteredTable(QWidget):
@@ -100,9 +98,6 @@ class FilteredTable(QWidget):
         self.table_view.setSortingEnabled(True)
         self.table_view.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.table_view.setAlternatingRowColors(True)
-
-        self.table_view_copy = self.table_view
-
         palette = QPalette()
         brush = QBrush(QColor(229, 234, 248))
         brush.setStyle(Qt.BrushStyle.SolidPattern)
@@ -117,7 +112,7 @@ class FilteredTable(QWidget):
         self.table_view.setModel(self.table_model)
         self.table_view.clicked.connect(self._on_row_clicked)
 
-        self.items_per_page = 3
+        self.items_per_page = 10
         self.current_page = 1
         self.total_pages = len(data) // self.items_per_page + 1
 
@@ -138,11 +133,11 @@ class FilteredTable(QWidget):
 
         # Rows per page combobox
         self.rows_per_page_combobox = QComboBox()
-        self.rows_per_page_combobox.addItems(["3", "10", "20", "50"])
+        self.rows_per_page_combobox.addItems(["10", "20", "50"])
         self.rows_per_page_combobox.setCurrentText(str(self.items_per_page))
         self.rows_per_page_combobox.currentTextChanged.connect(self.change_items_per_page)
 
-        self.filter_widget = FilterWidget(self.table_view, self.table_view_copy, self)
+        self.filter_widget = FilterWidget(self.table_view, self)
 
         hbox = QHBoxLayout()
         hbox.setSpacing(10)
