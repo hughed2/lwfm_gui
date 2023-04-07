@@ -38,8 +38,9 @@ class MetaTreeViewWidget(QWidget):
         # else:
         #     site = Site.getSiteInstanceFactory("dt4d")
         #     self.repoDriver = site.getRepoDriver()
-        
+
         site = Site.getSiteInstanceFactory("dt4d")
+        self.repoDriver = site.getRepoDriver()
 
         layout = QVBoxLayout()
         layout.setSpacing(0)
@@ -134,7 +135,7 @@ class MetaTreeViewWidget(QWidget):
         self.table = FilteredTable(data, headers)
         table_view = self.table.get_table_view()
         table_view.setColumnWidth(0, 250)
-        table_view.setColumnWidth(1, 280)
+        table_view.setColumnWidth(1, 290)
         table_view.setColumnWidth(2, 250)
         table_view.setColumnWidth(3, 100)
         table_view.setColumnWidth(4, 450)

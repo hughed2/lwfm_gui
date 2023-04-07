@@ -125,12 +125,10 @@ class NavBar(QWidget):
                     
                 authDriver = site.getAuthDriver()
                 if not authDriver.isAuthCurrent():
-                    self.siteSelection.hide()
                     authDriver.login()
                     if not authDriver.isAuthCurrent():
                         msgBox(f"ERROR: Could not log in to site {selection}", self)
                         self.parent().parent().setSite(None)
                         return
                 msgBox(f"Successfully logged in to site {selection}", self)
-                self.siteSelection.show()
                 self.parent().parent().setSite(selection)
