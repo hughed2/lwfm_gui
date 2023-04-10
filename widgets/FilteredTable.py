@@ -176,14 +176,16 @@ class FilteredTable(QWidget):
     def set_table_model(self, table_model):
         self.table_model = table_model
 
-    #Updates the data in the table with new data and updates the filters and table view accordingly.
-    def update_data(self, data):
-        self.data = data
+    def clear_filters(self):
         # Disconnect textChanged signal from each filter QLineEdit to avoid updating filters when clearing them
         for line_edit in self.filter_widget._filters:
             line_edit.textChanged.disconnect(self.filter_widget._on_text_changed)
             line_edit.clear()
             line_edit.textChanged.connect(self.filter_widget._on_text_changed)
+
+    #Updates the data in the table with new data and updates the filters and table view accordingly.
+    def update_data(self, data):
+        self.data = data
         # Update table model with new data
         model = self.table_model.sourceModel()
         model.removeRows(1, model.rowCount() - 1)

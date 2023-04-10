@@ -132,7 +132,7 @@ class JobStatusWidget(QWidget):
         
         # Clear updates our display to go live -- this is the default
         self.clearButton = QPushButton("Clear", self)
-        self.clearButton.clicked.connect(self.liveUpdate)
+        self.clearButton.clicked.connect(self.clear)
         self.clearButton.setProperty("class", "btn-primary")
         self.btnLayout.addWidget(self.clearButton)
         
@@ -175,7 +175,11 @@ class JobStatusWidget(QWidget):
         self.liveTimer = threading.Timer(5, JobStatusWidget.liveUpdate, args=(self,))
         self.liveTimer.daemon = True # We need to do this or else the thread will keep running even after the app is closed
         self.liveTimer.start()
-        
+
+    def clear(self):
+        self.table.clear_filters()
+        self.liveUpdate()
+
     def submit(self):
         startTimestamp = self.startDate.dateTime().toMSecsSinceEpoch() # This will get the msecs to midnight of the selected day
         
