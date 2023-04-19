@@ -39,7 +39,7 @@
     background-color: white;
     border: 1px solid rgb(150, 150, 150);
     border-radius: 3px;
-    min-width: 595px;
+    min-width: 565px;
 }
 
 .tree_input_frame {
@@ -47,8 +47,8 @@
     margin: 2px 5px; 
     border-radius: 10px;
     border: 1px solid #777;
-    min-width: 570px;
-    min-height: 70px;
+    min-width: 542px;
+    min-height: 50px;
 }
 
 tree_input_widget{
@@ -63,7 +63,7 @@ tree_input_widget{
     border-style: hidden; 
     border-width: 2px; 
     border-radius: 5px;
-    margin:0px 5px;
+    margin:0px 2px;
     padding: 1px 3px;
 }
 

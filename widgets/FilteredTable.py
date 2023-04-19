@@ -1,5 +1,4 @@
 
-
 from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSortFilterProxyModel, QRegularExpression, pyqtSignal, QTimer
 from PyQt6.QtGui import QStandardItemModel, QStandardItem, QPalette, QColor, QBrush, QIcon, QPixmap
 from PyQt6.QtWidgets import QApplication, QTableView, QLineEdit, QVBoxLayout, QWidget, QAbstractItemView, QHBoxLayout, QPushButton, QHeaderView, QLabel, QComboBox, QSpacerItem
@@ -18,6 +17,7 @@ class FilterModel(QSortFilterProxyModel):
 
     # check if a row matches all the filter regexes
     def filterAcceptsRow(self, sourceRow: int, sourceParent: QModelIndex) -> bool:
+
         if sourceRow == 0:
             return True
 
@@ -61,6 +61,14 @@ class FilterWidget(QWidget):
     def _on_text_changed(self, text):
         sender = self.sender()
         column = self._filters.index(sender)
+
+        self.parent().filtered_data = []
+        self.parent().current_page = 1
+        for row in self.parent().data:
+            if text in row[column]:
+                self.parent().filtered_data.append(row)
+        self.parent().update_table()
+
         proxy_model = self._view.model()
         regex = QRegularExpression(text, QRegularExpression.PatternOption.CaseInsensitiveOption)
         proxy_model.setFilterRegex(column, regex)
@@ -73,6 +81,7 @@ class FilterWidget(QWidget):
         QTimer.singleShot(500, self._view.viewport().update)
         # create a delay on the filtering so that it won't filter until the user is done typing
 
+
 # custom widget that contains the filtered table
 class FilteredTable(QWidget):
     # signal emitted when a row in the table is clicked
@@ -81,6 +90,7 @@ class FilteredTable(QWidget):
     def __init__(self, data, headers, parent=None):
         super().__init__(parent)
         self.data = data
+        self.filtered_data = data
         # create the table model
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(headers)
@@ -182,10 +192,11 @@ class FilteredTable(QWidget):
             line_edit.textChanged.disconnect(self.filter_widget._on_text_changed)
             line_edit.clear()
             line_edit.textChanged.connect(self.filter_widget._on_text_changed)
-
     #Updates the data in the table with new data and updates the filters and table view accordingly.
     def update_data(self, data):
         self.data = data
+        self.filtered_data = data
+
         # Update table model with new data
         model = self.table_model.sourceModel()
         model.removeRows(1, model.rowCount() - 1)
@@ -208,7 +219,7 @@ class FilteredTable(QWidget):
         start_index = (self.current_page - 1) * self.items_per_page
         if model.rowCount() > 1:
             model.removeRows(1, model.rowCount())
-            end_index = min(start_index + self.items_per_page, len(self.data))
+            end_index = min(start_index + self.items_per_page, len(self.filtered_data))
         else:
             end_index = min(start_index + self.items_per_page, 1)
 
@@ -216,14 +227,14 @@ class FilteredTable(QWidget):
         model.setRowCount(end_index - start_index)
 
         # Iterate over the data to display and set the cell values in the table model
-        for row_index, row_data in enumerate(self.data[start_index:end_index]):
+        for row_index, row_data in enumerate(self.filtered_data[start_index:end_index]):
             for column_index, cell_data in enumerate(row_data):
                 cell = QStandardItem(str(cell_data))
                 cell.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 model.setItem(row_index+1, column_index, cell)
 
         # Update the total number of pages and the page label
-        self.total_pages = (len(self.data) - 1) // self.items_per_page + 1
+        self.total_pages = (len(self.filtered_data) - 1) // self.items_per_page + 1
         self.page_label.setText(f"Page {self.current_page} of {self.total_pages}")
 
     #Moves the table view to the previous page of data if possible.

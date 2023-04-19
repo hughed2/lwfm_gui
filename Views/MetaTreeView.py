@@ -85,7 +85,7 @@ class MetaTreeViewWidget(QWidget):
         self.scroll.setWidgetResizable(True)
         self.scroll.setProperty("class", "scroll")
         self.scroll.setFixedHeight(250)
-        self.scroll.setFixedWidth(585)
+        self.scroll.setFixedWidth(558)
         self.scrollWidget = QtWidgets.QWidget()
         self.scrollWidget.setProperty("class", "scrollWidget")
 
@@ -351,7 +351,6 @@ class MetaTreeViewWidget(QWidget):
         for idx, sheet in enumerate(sheets):
             data.append([str(sheet.getName()), str(sheet.getId()), 
                 str(datetime.fromtimestamp(sheet.getTimestamp()/1000)), str(sheet.getSize()), str(sheet.getMetadata())])
-
         self.table.update_data(data)
 
     def rowClicked(self, row):
@@ -388,7 +387,6 @@ class TreeInput(QWidget):
 
         self.removeLayout = QtWidgets.QVBoxLayout(self.treeInputWidget)
         self.removeLayout.setSpacing(0)
-        self.removeLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.remove_button = QtWidgets.QPushButton(self.treeInputWidget)
         self.remove_button.setProperty("class", "remove_button")
