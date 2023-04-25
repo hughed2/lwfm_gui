@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import QApplication
 
 import sys
-import fontawesome
 
 from AppWindow import MainWindow
 
