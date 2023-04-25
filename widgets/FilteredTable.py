@@ -1,5 +1,4 @@
 
-
 from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSortFilterProxyModel, QRegularExpression, pyqtSignal, QTimer
 from PyQt6.QtGui import QStandardItemModel, QStandardItem, QPalette, QColor, QBrush, QIcon, QPixmap
 from PyQt6.QtWidgets import QApplication, QTableView, QLineEdit, QVBoxLayout, QWidget, QAbstractItemView, QHBoxLayout, QPushButton, QHeaderView, QLabel, QComboBox, QSpacerItem
@@ -9,31 +8,6 @@ from PyQt6 import QtWidgets
 class FilterModel(QSortFilterProxyModel):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._filter_regexes = {}
-
-    # set the filter regex for a given column
-    def setFilterRegex(self, column, regex):
-        self._filter_regexes[column] = regex
-        self.invalidateFilter()
-
-    # check if a row matches all the filter regexes
-    def filterAcceptsRow(self, sourceRow: int, sourceParent: QModelIndex) -> bool:
-        if sourceRow == 0:
-            return True
-
-        for column in self._filter_regexes:
-            if self.sourceModel().data(self.sourceModel().index(sourceRow, column)):
-                text = self.sourceModel().data(self.sourceModel().index(sourceRow, column)).lower()
-                regex = self._filter_regexes[column]
-                if regex.pattern().lower() not in text:
-                    return False
-        return True
-
-    # don't sort the first row (header row)
-    def lessThan(self, left, right):
-        if left.row() == 0 or right.row() == 0:
-            return False
-        return super().lessThan(left, right)
 
 
 class FilterWidget(QWidget):
@@ -51,27 +25,29 @@ class FilterWidget(QWidget):
         for i in range(self._view.model().columnCount()):
             line_edit = QLineEdit(self)
             line_edit.setPlaceholderText("Filter...")
-            line_edit.textChanged.connect(self._on_text_changed)
+            line_edit.textChanged.connect(self._apply_filters)
             self._filters.append(line_edit)
             layout.addWidget(line_edit)
             # set the filter input box as the index widget for the corresponding column header
             self._view.setIndexWidget(self._view.model().index(0, i), line_edit)
 
     # update the filter regex for a column when its input box is changed
-    def _on_text_changed(self, text):
-        sender = self.sender()
-        column = self._filters.index(sender)
-        proxy_model = self._view.model()
-        regex = QRegularExpression(text, QRegularExpression.PatternOption.CaseInsensitiveOption)
-        proxy_model.setFilterRegex(column, regex)
+    def _apply_filters(self):
+        #sender = self.sender()
+        #column = self._filters.index(sender)
 
-        sender = self.sender()
-        column = self._filters.index(sender)
-        proxy_model = self._view.model()
-        regex = QRegularExpression(text, QRegularExpression.PatternOption.CaseInsensitiveOption)
-        proxy_model.setFilterRegex(column, regex)
-        QTimer.singleShot(500, self._view.viewport().update)
-        # create a delay on the filtering so that it won't filter until the user is done typing
+        self.parent().filtered_data = []
+        self.parent().current_page = 1
+
+        for row in self.parent().data:
+            acceptedRow = True
+            for i, column in enumerate(self._filters):
+                if self._filters[i].text() not in str(row[i]):
+                    acceptedRow = False
+            if acceptedRow:
+                self.parent().filtered_data.append(row)
+
+        self.parent().update_table()
 
 # custom widget that contains the filtered table
 class FilteredTable(QWidget):
@@ -81,6 +57,7 @@ class FilteredTable(QWidget):
     def __init__(self, data, headers, parent=None):
         super().__init__(parent)
         self.data = data
+        self.filtered_data = data
         # create the table model
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(headers)
@@ -133,7 +110,7 @@ class FilteredTable(QWidget):
 
         # Rows per page combobox
         self.rows_per_page_combobox = QComboBox()
-        self.rows_per_page_combobox.addItems(["10", "20", "50"])
+        self.rows_per_page_combobox.addItems(["5", "10", "20", "50"])
         self.rows_per_page_combobox.setCurrentText(str(self.items_per_page))
         self.rows_per_page_combobox.currentTextChanged.connect(self.change_items_per_page)
 
@@ -179,13 +156,15 @@ class FilteredTable(QWidget):
     def clear_filters(self):
         # Disconnect textChanged signal from each filter QLineEdit to avoid updating filters when clearing them
         for line_edit in self.filter_widget._filters:
-            line_edit.textChanged.disconnect(self.filter_widget._on_text_changed)
+            line_edit.textChanged.disconnect(self.filter_widget._apply_filters)
             line_edit.clear()
-            line_edit.textChanged.connect(self.filter_widget._on_text_changed)
+            line_edit.textChanged.connect(self.filter_widget._apply_filters)
 
     #Updates the data in the table with new data and updates the filters and table view accordingly.
     def update_data(self, data):
         self.data = data
+        self.filtered_data = data
+
         # Update table model with new data
         model = self.table_model.sourceModel()
         model.removeRows(1, model.rowCount() - 1)
@@ -193,6 +172,7 @@ class FilteredTable(QWidget):
             items = [QStandardItem(str(field)) for field in row]
             model.appendRow(items)
         self.table_model.invalidateFilter()
+        self.filter_widget._apply_filters()
         self.update_table()
 
     #Updates the headers of the table with new headers.
@@ -206,24 +186,25 @@ class FilteredTable(QWidget):
 
         # Calculate the start and end index of the data to display based on the current page and items per page settings
         start_index = (self.current_page - 1) * self.items_per_page
-        if model.rowCount() > 1:
+        if model.rowCount() > 1 and len(self.filtered_data) > 0:
             model.removeRows(1, model.rowCount())
-            end_index = min(start_index + self.items_per_page, len(self.data))
+            end_index = min(start_index + self.items_per_page, len(self.filtered_data))
         else:
             end_index = min(start_index + self.items_per_page, 1)
 
         # Set the row count of the table model to the number of rows to display
+        print("*********Start Index: " + str(start_index) + ", End Index: " + str(end_index))
         model.setRowCount(end_index - start_index)
 
         # Iterate over the data to display and set the cell values in the table model
-        for row_index, row_data in enumerate(self.data[start_index:end_index]):
+        for row_index, row_data in enumerate(self.filtered_data[start_index:end_index]):
             for column_index, cell_data in enumerate(row_data):
                 cell = QStandardItem(str(cell_data))
                 cell.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 model.setItem(row_index+1, column_index, cell)
 
         # Update the total number of pages and the page label
-        self.total_pages = (len(self.data) - 1) // self.items_per_page + 1
+        self.total_pages = (len(self.filtered_data) - 1) // self.items_per_page + 1
         self.page_label.setText(f"Page {self.current_page} of {self.total_pages}")
 
     #Moves the table view to the previous page of data if possible.
@@ -246,10 +227,9 @@ class FilteredTable(QWidget):
 
 if __name__ == '__main__':
     app = QApplication([])
-    data = [[1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"], [1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"],[1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"],[1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"],[1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"],[1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"],]
+    data = [[1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"], [1, "apple", "green"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"],[1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"],[1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"],[1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"],[1, "apple", "red"], [2, "banana", "yellow"], [3, "orange", "orange"], [4, "kiwi", "green"],]
     headers = ["ID", "Fruit", "Color"]
     window = FilteredTable(data, headers)
     window.rowClicked.connect(lambda row: print(f"Row clicked: {row}"))
     window.show()
-    new_data = [[5, "grape", "purple", "test"], [6, "watermelon", "green", "Test"], [7, "peach", "orange", "tst"]]
     app.exec()

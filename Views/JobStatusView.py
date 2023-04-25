@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QWidget, QDateTimeEdit, QCalendarWidget,
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtGui import QIcon, QPixmap
 from widgets.FilteredTable import FilteredTable
-from PyQt6.QtCore import QDateTime
+from PyQt6.QtCore import QDateTime, QTimer
 from PyQt6.QtCore import Qt
 
 from lwfm.base.Site import Site
@@ -21,6 +21,7 @@ class JobStatusWidget(QWidget):
 
         self.setMaximumSize(QtCore.QSize(10000, 10000))
 
+        self.liveData = True
         self.live = QIcon("icons/green-circle.png")
         self.not_live = QIcon("icons/red-circle.png")
 
@@ -71,13 +72,13 @@ class JobStatusWidget(QWidget):
 
         layout.addWidget(self.headerWrapper)
 
-        data = []
+        self.data = []
         headers = ["ID", "Status", "Site Name", "Job Name", "User Name", "Group", "Compute Type", "Timestamp"]
-        self.table = FilteredTable(data, headers)
+        self.table = FilteredTable(self.data, headers)
         self.table.rowClicked.connect(self.rowClicked)
 
         table_view = self.table.get_table_view()
-        table_view.setColumnWidth(0, 280)
+        table_view.setColumnWidth(0, 290)
         table_view.setColumnWidth(1, 150)
         table_view.setColumnWidth(2, 150)
         table_view.setColumnWidth(3, 250)
@@ -145,10 +146,9 @@ class JobStatusWidget(QWidget):
     def updateTable(self, startTimestamp, endTimestamp):
         if self.parent().parent().parent():
             if self.parent().parent().parent().getSite() is not None:
-                data = []
+                self.data = []
                 # Each cell needs to be added individually, so do a nested loop
                 # These column names currently match DT4D results, but we need to make sure they match lwfm results            
-                columns = ["workflowId", "status", "siteName", "jobName", "userSSO", "group", "computeType", "localTimestamp"]
                 sites = self.parent().parent().parent().getSite()
                 for site in sites:
                     site = Site.getSiteInstanceFactory(site)
@@ -158,26 +158,25 @@ class JobStatusWidget(QWidget):
                     if self.jobList:
                         for job in self.jobList:
                             context = job.getJobContext()
-                            data.append([context.getId(), job.getStatus().value, context.getSiteName(), context.getName(), context.getUser(), context.getGroup(), context.getComputeType(), job.getReceivedTime()])
-                self.table.update_data(data)
+                            self.data.append([context.getId(), job.getStatus().value, context.getSiteName(), context.getName(), context.getUser(), context.getGroup(), context.getComputeType(), job.getReceivedTime()])
+                self.table.update_data(self.data)
 
     def rowClicked(self, row):
         JobStatusModalWidget(self, self.jobList[row]).exec()
 
-    def liveUpdate(self):  
+    def liveUpdate(self):
         pixmap = self.live.pixmap(15, 15)
         image = pixmap.toImage()
         new_pixmap = QPixmap.fromImage(image)
         self.indicator.setPixmap(new_pixmap)
         curTime = int(time.time() * 1000)
-        startTimestamp = self.startDate.dateTime().toMSecsSinceEpoch()
-        self.updateTable(startTimestamp, curTime) # we'll do an update from two hours ago to now
-        self.liveTimer = threading.Timer(5, JobStatusWidget.liveUpdate, args=(self,))
-        self.liveTimer.daemon = True # We need to do this or else the thread will keep running even after the app is closed
-        self.liveTimer.start()
+        self.updateTable(curTime - (2 * 60 * 60 * 1000), curTime)
+        
+        if self.liveData:
+            self.liveTimer = QTimer.singleShot(10000, self.liveUpdate)
 
     def clear(self):
-        self.table.clear_filters()
+        #self.table.clear_filters()
         self.liveUpdate()
 
     def submit(self):
@@ -192,13 +191,13 @@ class JobStatusWidget(QWidget):
             image = pixmap.toImage()
             new_pixmap = QPixmap.fromImage(image)
             self.indicator.setPixmap(new_pixmap)
-
-            self.liveTimer.cancel() # Deactivate the timer for live updates
+            self.liveData = False # Deactivate the timer for live updates
         else:
             pixmap = self.live.pixmap(15, 15)
             image = pixmap.toImage()
             new_pixmap = QPixmap.fromImage(image)
             self.indicator.setPixmap(new_pixmap)
+            self.liveData = True
 
         self.updateTable(startTimestamp, endTimestamp)  
 

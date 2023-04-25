@@ -1,11 +1,10 @@
-# Import library
 import sys
 from PyQt6.QtWidgets import QWidget, QApplication, QVBoxLayout
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtWebEngineWidgets import QWebEngineView
-from d3graph import d3graph, vec2adjmat
 
 from PyQt6 import QtCore, QtGui, QtWidgets
+
+from widgets.WorkflowGraph import WorkflowGraph
 
 class GraphWidget(QWidget):
     name = "Trigger List"
@@ -13,44 +12,15 @@ class GraphWidget(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.createGraph()
+        self.get_jobs()
 
         self.initUI()
-
-    def createGraph(self):
-           #Set source and target nodes
-        source = ['node A','node F','node B','node B','node B','node A','node C','node Z']
-        target = ['node F','node B','node J','node F','node F','node M','node M','node A']
-        weight = [5.56, 0.5, 0.64, 0.23, 0.9, 3.28, 0.5, 0.45]
-
-        # Create adjacency matrix
-        adjmat = vec2adjmat(source, target, weight=weight)
-
-        # target  node A  node B  node F  node J  node M  node C  node Z
-        # source                                                        
-        # node A    0.00     0.0    5.56    0.00    3.28     0.0     0.0
-        # node B    0.00     0.0    1.13    0.64    0.00     0.0     0.0
-        # node F    0.00     0.5    0.00    0.00    0.00     0.0     0.0
-        # node J    0.00     0.0    0.00    0.00    0.00     0.0     0.0
-        # node M    0.00     0.0    0.00    0.00    0.00     0.0     0.0
-        # node C    0.00     0.0    0.00    0.00    0.50     0.0     0.0
-        # node Z    0.45     0.0    0.00    0.00    0.00     0.0     0.0
-
-        # Initialize
-        d3 = d3graph()
-
-        adjmat, _ = d3.import_example('bigbang')
-
-        # Build force-directed graph with default settings
-        d3.graph(adjmat)
-        d3.show(filepath='./graph_example.html')
 
     def initUI(self):
 
         _translate = QtCore.QCoreApplication.translate
         font = QtGui.QFont()
         font.setFamily("Helvetica Neue")
-
 
         layout = QVBoxLayout()
         layout.setSpacing(0)
@@ -68,10 +38,19 @@ class GraphWidget(QWidget):
 
         layout.addWidget(self.header)
 
-        self.webEngineView = QWebEngineView()
-        self.loadPage()
+        self.scroll = QScrollArea(self)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
+        sizePolicy.setHeightForWidth(self.scroll.sizePolicy().hasHeightForWidth())
+        self.scroll.setSizePolicy(sizePolicy)
+        self.scroll.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setProperty("class", "scroll")
+        self.scroll.setFixedWidth(800)
+        self.scrollWidget = QtWidgets.QWidget()
+        self.scrollWidget.setProperty("class", "scrollWidget")
 
-        layout.addWidget(self.webEngineView)
+        self.workflow = WorkflowGraph(self.jobs)
+        self.scroll.addWidget(self.workflow)
 
         self.footer = QtWidgets.QFrame()
         self.footer.setProperty("class", "footer")
@@ -87,13 +66,42 @@ class GraphWidget(QWidget):
 
         self.setLayout(layout)        
 
-        self.setGeometry(200, 200, 250, 150)
-        self.setWindowTitle('QWebEngineView')
         self.show()
 
-    def loadPage(self):
-
-        with open('graph_example.html', 'r') as f:
-
-            html = f.read()
-            self.webEngineView.setHtml(html)
+    def get_jobs(self):
+        self.jobs = []
+        job1_context = JobContext()
+        job1_context.setName("Launcher")
+        job1_context.setOriginJobId(job1_context.getId())
+        job1_context.setParentJobId("")
+        job1_context.setComputeType("Local")
+        job1 = self.jobstatus(job1_context)
+        self.jobs.append(job1)
+        job2_context = JobContext()
+        job2_context.setName("Pre Processing")
+        job2_context.setOriginJobId(job1_context.getId())
+        job2_context.setParentJobId(job1_context.getId())
+        job2_context.setComputeType("Windows")
+        job2 = self.jobstatus(job2_context)
+        self.jobs.append(job2)
+        job3_context = JobContext()
+        job3_context.setName("Notification")
+        job3_context.setOriginJobId(job1_context.getId())
+        job3_context.setParentJobId(job2_context.getId())
+        job3_context.setComputeType("Linux")
+        job3 = self.jobstatus(job3_context)
+        self.jobs.append(job3)
+        job4_context = JobContext()
+        job4_context.setName("Simulation")
+        job4 = self.jobstatus(job4_context)
+        job4_context.setOriginJobId(job1_context.getId())
+        job4_context.setParentJobId(job3_context.getId())
+        job4_context.setComputeType("Windows")
+        self.jobs.append(job4)
+        job5_context = JobContext()
+        job5_context.setName("Post Processing")
+        job5_context.setOriginJobId(job1_context.getId())
+        job5_context.setParentJobId(job4_context.getId())
+        job5_context.setComputeType("Linux")
+        job5 = self.jobstatus(job5_context)
+        self.jobs.append(job5)

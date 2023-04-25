@@ -91,7 +91,6 @@ QTableView {
 /* Set the height and width of the QComboBox */
 QComboBox {
 height: 25px;
-width: 150px;
 padding: 2px;
 border: 1px solid #ccc;
 border-radius: 5px;
