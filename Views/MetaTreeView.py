@@ -172,7 +172,7 @@ class MetaTreeViewWidget(QWidget):
         self.tenant_selection.addItem("GroupC")
         self.tenant_selection.addItem("GroupD")
         self.tenant_selection.setFixedWidth(150)
-        self.btnLayout.addWidget(self.tenant_selection)
+        #self.btnLayout.addWidget(self.tenant_selection)
         
         self.start_label = QtWidgets.QLabel()
         self.start_label.setProperty("class", "footer_label")
@@ -300,7 +300,6 @@ class MetaTreeViewWidget(QWidget):
                 nextItem = QtWidgets.QTreeWidgetItem(child)
 
     def get_values(self, field, contains="", group="", metadata={}):
-        group = "g01270695"
         start_time = self.start_date.dateTime().toMSecsSinceEpoch()
         end_time = self.end_date.dateTime().toMSecsSinceEpoch()
         return self.repoDriver.get_values(field, contains, group, metadata, start_time, end_time)
@@ -412,26 +411,6 @@ class TreeInput(QWidget):
         self.tree_field.setProperty("class", "text_input")
         if field:
             self.tree_field.setText(field)
-
-
-
-
-
-        
-        
-        
-        
-
-        
-
-        
-
-        
-
-        
-
-
-
 
         self.field_layout.addWidget(self.tree_field)
         

@@ -8,7 +8,11 @@ from PyQt6 import QtWidgets
 class FilterModel(QSortFilterProxyModel):
     def __init__(self, parent=None):
         super().__init__(parent)
-
+    # don't sort the first row (header row)
+    def lessThan(self, left, right):
+        if left.row() == 0 or right.row() == 0:
+            return False
+        return super().lessThan(left, right)
 
 class FilterWidget(QWidget):
     def __init__(self, view, parent=None):
@@ -25,11 +29,15 @@ class FilterWidget(QWidget):
         for i in range(self._view.model().columnCount()):
             line_edit = QLineEdit(self)
             line_edit.setPlaceholderText("Filter...")
-            line_edit.textChanged.connect(self._apply_filters)
+            line_edit.textChanged.connect(self._filter_changed)
             self._filters.append(line_edit)
             layout.addWidget(line_edit)
             # set the filter input box as the index widget for the corresponding column header
             self._view.setIndexWidget(self._view.model().index(0, i), line_edit)
+
+    def _filter_changed(self):
+        self.parent().current_page = 1
+        self._apply_filters()
 
     # update the filter regex for a column when its input box is changed
     def _apply_filters(self):
@@ -37,7 +45,6 @@ class FilterWidget(QWidget):
         #column = self._filters.index(sender)
 
         self.parent().filtered_data = []
-        self.parent().current_page = 1
 
         for row in self.parent().data:
             acceptedRow = True
@@ -186,14 +193,13 @@ class FilteredTable(QWidget):
 
         # Calculate the start and end index of the data to display based on the current page and items per page settings
         start_index = (self.current_page - 1) * self.items_per_page
-        if model.rowCount() > 1 and len(self.filtered_data) > 0:
+        if len(self.filtered_data) > 0:
             model.removeRows(1, model.rowCount())
             end_index = min(start_index + self.items_per_page, len(self.filtered_data))
         else:
             end_index = min(start_index + self.items_per_page, 1)
 
         # Set the row count of the table model to the number of rows to display
-        print("*********Start Index: " + str(start_index) + ", End Index: " + str(end_index))
         model.setRowCount(end_index - start_index)
 
         # Iterate over the data to display and set the cell values in the table model
