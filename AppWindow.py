@@ -36,7 +36,7 @@ class MainWindow(QMainWindow):
         self.frameLayout.addWidget(self.stack)
         self.showMaximized()
         self.setCentralWidget(self.frameLayoutWidget)
-        self.changePage(3)
+        self.changePage(1)
         #self.disableToolbar() # We don't want them to choose a new page until they've chosen their site
 
     def changePage(self, idx):

@@ -11,6 +11,8 @@ from widgets.FilteredTable import FilteredTable
 from PyQt6.QtCore import QDateTime, QTimer
 from PyQt6.QtCore import Qt
 
+from Utils import msgBox
+
 from lwfm.base.Site import Site
 
 class JobStatusWidget(QWidget):
@@ -18,6 +20,8 @@ class JobStatusWidget(QWidget):
     
     def __init__(self, parent):
         super().__init__(parent)
+
+        self.sites = self.parent().parent().getSite()
 
         self.setMaximumSize(QtCore.QSize(10000, 10000))
 
@@ -150,8 +154,7 @@ class JobStatusWidget(QWidget):
                 self.data = []
                 # Each cell needs to be added individually, so do a nested loop
                 # These column names currently match DT4D results, but we need to make sure they match lwfm results            
-                sites = self.parent().parent().parent().getSite()
-                for site in sites:
+                for site in self.sites:
                     site = Site.getSiteInstanceFactory(site)
                     runDriver = site.getRunDriver()
                     self.jobList = runDriver.getJobList(startTimestamp, endTimestamp)
@@ -178,11 +181,15 @@ class JobStatusWidget(QWidget):
                 self.liveTimer = QTimer.singleShot(5000, self.liveUpdate)
 
     def clear(self):
-        #self.table.clear_filters()
+        self.startDate.setDateTime(QDateTime.currentDateTime())
+        self.endDate.setDateTime(QDateTime.currentDateTime())
+        self.startTimestamp = int(time.time() * 1000)
         self.liveData = True
         self.liveUpdate()
 
     def submit(self):
+        if len(self.sites) < 1:
+            msgBox("Please select at least one site before submitting.", self)
         self.startTimestamp = self.startDate.dateTime().toMSecsSinceEpoch() # This will get the msecs to midnight of the selected day
         
         endTimestamp = self.endDate.dateTime().toMSecsSinceEpoch() # This will get the msecs to midnight of the selected day
