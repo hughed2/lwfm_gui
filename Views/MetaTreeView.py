@@ -9,7 +9,7 @@ from widgets.FilteredTable import FilteredTable
 from PyQt6.QtWidgets import (QWidget, QDateTimeEdit, QCalendarWidget,
                              QHBoxLayout, QVBoxLayout,
                              QPushButton, QDialog,
-                             QLabel, QTableWidget, QTableWidgetItem, 
+                             QLabel, QTableWidget, QTableWidgetItem,
                              QTableView, QSpacerItem, QScrollArea, QFileDialog, QHeaderView)
 
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -19,26 +19,19 @@ from PyQt6.QtCore import Qt
 
 from pathlib import Path
 
-from lwfm.base.Site import Site  
-from lwfm.base.SiteFileRef import FSFileRef  
+from lwfm.base.Site import Site
+from lwfm.base.SiteFileRef import FSFileRef
 
 font = QtGui.QFont()
 font.setFamily("Helvetica Neue")
 
 class MetaTreeViewWidget(QWidget):
     name = "Meta Tree View"
-    
+
     def __init__(self, parent):
         super().__init__(parent)
 
-        # if self.parent().parent().getSite() is not None and len(self.parent().parent().getSite()) > 0:
-        #     site = self.parent().parent().getSite()
-        #     site = Site.getSiteInstanceFactory(site[0])
-        #     self.repoDriver = site.getRepoDriver()
-        # else:
-        #     site = Site.getSiteInstanceFactory("dt4d")
-        #     self.repoDriver = site.getRepoDriver()
-
+        # dt4d is the only site with the meta tree view implemented 
         site = Site.getSiteInstanceFactory("dt4d")
         self.repoDriver = site.getRepoDriver()
 
@@ -98,8 +91,8 @@ class MetaTreeViewWidget(QWidget):
         self.tree_inputs_layout.setContentsMargins(0, 5, 0, 5)
         self.tree_inputs_layout.setSpacing(5)
         self.tree_inputs_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.tree_inputs_layout.setProperty("class", "tree_inputs_layout")      
-       
+        self.tree_inputs_layout.setProperty("class", "tree_inputs_layout")
+
         self.scroll.setWidget(self.scrollWidget)
 
         self.tree_form_layout.addWidget(self.scroll)
@@ -129,7 +122,7 @@ class MetaTreeViewWidget(QWidget):
         self.mtv_tree.itemExpanded.connect(self.treeItemExpand)
         self.mtv_tree.itemCollapsed.connect(self.treeItemCollapse)
         self.mtv_layout.addWidget(self.mtv_tree)
-        
+
         data = []
         headers = ["File Name", "ID", "Date", "File Size", "Metadata"]
         self.table = FilteredTable(data, headers)
@@ -173,13 +166,13 @@ class MetaTreeViewWidget(QWidget):
         self.tenant_selection.addItem("GroupD")
         self.tenant_selection.setFixedWidth(150)
         #self.btnLayout.addWidget(self.tenant_selection)
-        
+
         self.start_label = QtWidgets.QLabel()
         self.start_label.setProperty("class", "footer_label")
         self.start_label.setText("Start")
-        
+
         self.btnLayout.addWidget(self.start_label)
-        
+
         self.start_date = QtWidgets.QDateTimeEdit(QDateTime.currentDateTime())
         self.start_date.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.PlusMinus)
         self.start_date.setCalendarPopup(True)
@@ -191,7 +184,7 @@ class MetaTreeViewWidget(QWidget):
         self.end_label.setText("End")
 
         self.btnLayout.addWidget(self.end_label)
-        
+
         self.end_date = QtWidgets.QDateTimeEdit(QDateTime.currentDateTime())
         self.end_date.setProperty("showGroupSeparator", False)
         self.end_date.setCalendarPopup(True)
@@ -202,15 +195,13 @@ class MetaTreeViewWidget(QWidget):
         self.submitButton.setProperty("class", "btn-primary")
         self.submitButton.clicked.connect(self.submit)
         self.btnLayout.addWidget(self.submitButton)
-        
+
         layout.addWidget(self.footer)
 
         self.setLayout(layout)
 
         #self.tree_inputs_layout.addWidget(TreeInput(self))
-        self.tree_inputs_layout.addWidget(TreeInput(self, "GradyTest"))
-        self.tree_inputs_layout.addWidget(TreeInput(self, "project"))
-        self.tree_inputs_layout.addWidget(TreeInput(self, "case")) 
+        self.tree_inputs_layout.addWidget(TreeInput(self, ""))
 
     def submit(self):
         #Remove the previous tree if it exists
@@ -227,10 +218,10 @@ class MetaTreeViewWidget(QWidget):
             item_icon = QIcon("icons/folder.png")
             item.setIcon(0, item_icon)
             self.mtv_tree.topLevelItem(x).setText(0, values[x])
-            #adding an empty item as a child of this item so that it is expandable.  This will be replaced by the 
+            #adding an empty item as a child of this item so that it is expandable.  This will be replaced by the
             #next level of the tree if the user clicks the expand.
             item2 = QtWidgets.QTreeWidgetItem(item)
-        
+
     def add_input(self, txt=None):
         #Adds a TreeInput the the tree input list
         tree_input = TreeInput(self, txt)
@@ -266,7 +257,7 @@ class MetaTreeViewWidget(QWidget):
             column_index = column_index + 1
             parent = parent.parent()
 
-        #Getting the field for the corresponding input and its value.  This will need to be included as metadata 
+        #Getting the field for the corresponding input and its value.  This will need to be included as metadata
         #for getting the next set of values.
         field = self.tree_inputs_layout.itemAt(column_index).widget().get_tree_field()
         value = it.text(0)
@@ -282,7 +273,7 @@ class MetaTreeViewWidget(QWidget):
             value = parent.text(0)
             metadata[field] = value
             parent = parent.parent()
-            
+
 
         #Checking to see if there is a next tree input.  If not were at the end of the tree.
         if self.tree_inputs_layout.itemAt(column_index+1):
@@ -295,7 +286,7 @@ class MetaTreeViewWidget(QWidget):
                 child_icon = QIcon("icons/folder.png")
                 child.setIcon(0, child_icon)
                 child.setText(0, values[x])
-                #adding an empty item as a child of this item so that it is expandable.  This will be replaced by the 
+                #adding an empty item as a child of this item so that it is expandable.  This will be replaced by the
                 #next level of the tree if the user clicks the expand.
                 nextItem = QtWidgets.QTreeWidgetItem(child)
 
@@ -312,7 +303,7 @@ class MetaTreeViewWidget(QWidget):
 
     @QtCore.pyqtSlot(QtWidgets.QTreeWidgetItem, int)
     def treeItemClick(self, it, col):
-        #getting the list of values from the tree starting from the current item that was clicked before 
+        #getting the list of values from the tree starting from the current item that was clicked before
         #gathering values from the parents
         values = []
         values.append(it.text(col))
@@ -321,7 +312,7 @@ class MetaTreeViewWidget(QWidget):
             values.append(parent.text(col))
             parent = parent.parent()
 
-        
+
         idx = len(values) - 1
         metadata = {}
         #getting the list of fields from the input fields corresponding to the list of values.  Iterating
@@ -341,20 +332,22 @@ class MetaTreeViewWidget(QWidget):
         except Exception as ex:
             print(str(ex))
 
-    def load_sheets(self, sheets): 
+    def load_sheets(self, sheets):
         self.sheets = sheets
         numDisplayed = min(len(sheets), 50) # Display the first 50--should be more modular for pagination
-        displayedJobs = sheets[0:numDisplayed] 
+        displayedJobs = sheets[0:numDisplayed]
         #loop through the sheets provided and insert them into the file browser table
         data = []
         for idx, sheet in enumerate(sheets):
-            data.append([str(sheet.getName()), str(sheet.getId()), 
+            data.append([str(sheet.getName()), str(sheet.getId()),
                 str(datetime.fromtimestamp(sheet.getTimestamp()/1000)), str(sheet.getSize()), str(sheet.getMetadata())])
         self.table.update_data(data)
 
     def rowClicked(self, row):
         #when file browser cell is clicked, we open the modal to display details of that file and provide a download button.
-        DocumentModalWidget(self, self.sheets[row]).exec()
+        popup = DocumentModalWidget(self, self.sheets[row])
+        popup.setup_ui()
+        popup.show()
 
     def getRepoDriver(self):
         return self.repoDriver
@@ -400,7 +393,7 @@ class TreeInput(QWidget):
 
         self.spacerItem = QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
         self.field_layout.addItem(self.spacerItem)
-        
+
         self.tree_field_label = QtWidgets.QLabel(self.treeInputWidget)
         self.field_layout.addWidget(self.tree_field_label)
         self.tree_field_label.setProperty("class", "label")
@@ -409,11 +402,12 @@ class TreeInput(QWidget):
 
         self.tree_field = QtWidgets.QTextEdit(self.treeInputWidget)
         self.tree_field.setProperty("class", "text_input")
+        self.tree_field.setPlaceholderText("Metadata Field...")
         if field:
             self.tree_field.setText(field)
 
         self.field_layout.addWidget(self.tree_field)
-        
+
         self.tree_input_layout.addLayout(self.field_layout)
 
         self.contains_layout = QtWidgets.QHBoxLayout()
@@ -426,6 +420,7 @@ class TreeInput(QWidget):
 
         self.contains_input = QtWidgets.QTextEdit(self.treeInputWidget)
         self.contains_input.setProperty("class", "text_input")
+        self.contains_input.setPlaceholderText("Contains...")
         self.contains_layout.addWidget(self.contains_input)
 
         self.tree_input_layout.addLayout(self.contains_layout)
@@ -437,7 +432,7 @@ class TreeInput(QWidget):
 
         self.setProperty("class", "tree_input")
 
-        self.setLayout(layout) 
+        self.setLayout(layout)
 
     def get_tree_field(self):
         return self.tree_field.toPlainText()
@@ -447,7 +442,7 @@ class TreeInput(QWidget):
 
     def remove_input(self):
         self.deleteLater()
-              
+
 
 class DocumentModalWidget(QDialog):
     def __init__(self, parent, sheet):
@@ -455,11 +450,11 @@ class DocumentModalWidget(QDialog):
         self.sheet = sheet
 
         self.resize(500, 400)
-        
+
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        
+
         doc_info_header = QLabel("Document Details", self)
         doc_info_header.setProperty("class", "modal_header")
         self.layout.addWidget(doc_info_header)
@@ -487,21 +482,21 @@ class DocumentModalWidget(QDialog):
         item = QtWidgets.QTableWidgetItem()
         item.setText("Metadata:")
         self.table.setItem(4, 0, item)
-        str(sheet.getName())
+        str(self.sheet.getName())
 
         item = QtWidgets.QTableWidgetItem()
-        item.setText(sheet.getName())
+        item.setText(self.sheet.getName())
         self.table.setItem(0, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(sheet.getId())
+        item.setText(self.sheet.getId())
         self.table.setItem(1, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(str(datetime.fromtimestamp(sheet.getTimestamp()/1000)))
+        item.setText(str(datetime.fromtimestamp(self.sheet.getTimestamp()/1000)))
         self.table.setItem(2, 1, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText(str(sheet.getSize()))
+        item.setText(str(self.sheet.getSize()))
         self.table.setItem(3, 1, item)
-        metadata = sheet.getMetadata()
+        metadata = self.sheet.getMetadata()
         item = QTableWidget()
         item.setColumnCount(2)
         item.setRowCount(len(metadata))
@@ -528,7 +523,7 @@ class DocumentModalWidget(QDialog):
         self.table.setCellWidget(4, 1, item)
         self.table.resizeRowToContents(4)
 
-        header = self.table.horizontalHeader()       
+        header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
 
@@ -536,13 +531,18 @@ class DocumentModalWidget(QDialog):
 
         self.download_button = QtWidgets.QPushButton()
         self.download_button.setProperty("class", "btn-primary-blue")
-        self.download_button.clicked.connect(self.downloadFile)
+        
         self.download_button.setText("Download")
 
         self.layout.addWidget(self.layout.addWidget(self.download_button))
-        
+
         self.setLayout(self.layout)
+
+    def setup_ui(self):
+        self.download_button.clicked.connect(self.downloadFile)
 
     def downloadFile(self):
         #opens up a file browser and downloads the file to the directory chosen.
         filePath = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+        print("FILE PATH: " + filePath)
+        self.parent().repoDriver.get(self.sheet, filePath, None, True)

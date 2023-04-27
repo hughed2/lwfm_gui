@@ -117,7 +117,8 @@ class FilteredTable(QWidget):
 
         # Rows per page combobox
         self.rows_per_page_combobox = QComboBox()
-        self.rows_per_page_combobox.addItems(["5", "10", "20", "50"])
+        self.rows_per_page_combobox.addItems(["10", "20", "50"])
+        self.rows_per_page_combobox.setFixedWidth(80)
         self.rows_per_page_combobox.setCurrentText(str(self.items_per_page))
         self.rows_per_page_combobox.currentTextChanged.connect(self.change_items_per_page)
 
