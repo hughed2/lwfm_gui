@@ -1,0 +1,28 @@
+.liveIndicatorLabel {
+  background-color: rgb(0, 151, 255);
+  color: rgb(255, 255, 255);
+}
+
+.startLabel {
+    color: rgb(255, 255, 255);
+}
+
+.startDate{
+    background-color: rgb(255, 255, 255);
+}
+
+.endLabel{
+    color: rgb(255, 255, 255);
+}
+
+.endDate{
+    background-color: rgb(255, 255, 255);
+}
+
+.footerLabel{
+    color: rgb(255, 255, 255);
+}
+
+.footerLabel{
+    color: rgb(255, 255, 255);
+}

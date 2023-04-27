@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QDateTimeEdit, QCalendarWidget,
                              QPushButton, QDialog,
                              QLabel, QTableWidget, QTableWidgetItem)
 
-from Views import SiteView, JobStatusView, TriggerView, NavBar, MetaTreeView, Graph
+from Views import SiteView, JobStatusView, TriggerView, NavBar, MetaTreeView
 
 class MainWindow(QMainWindow):
     stack = None
@@ -21,13 +21,12 @@ class MainWindow(QMainWindow):
         self.frameLayoutWidget = QtWidgets.QWidget()
         self.frameLayout = QtWidgets.QHBoxLayout(self.frameLayoutWidget)
         self.frameLayoutWidget.setAutoFillBackground(False)
-        self.frameLayout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
-        self.frameLayout.setContentsMargins(0, 0, 0, 0)
+        self.frameLayout.setContentsMargins(7, 0, 0, 0)
         self.frameLayout.setSpacing(0)
 
         # Our stack is our list of pages we might see--make it from a list of widgets so we can automate it
         self.stack = QStackedWidget(self)
-        widgets = [SiteView.SiteWidget, JobStatusView.JobStatusWidget, TriggerView.TriggerWidget, MetaTreeView.MetaTreeViewWidget, Graph.GraphWidget]
+        widgets = [SiteView.SiteWidget, JobStatusView.JobStatusWidget, TriggerView.TriggerWidget, MetaTreeView.MetaTreeViewWidget]
         
         for idx, widget in enumerate(widgets):
            self.stack.addWidget(widget(self.stack))
@@ -37,7 +36,7 @@ class MainWindow(QMainWindow):
         self.frameLayout.addWidget(self.stack)
         self.showMaximized()
         self.setCentralWidget(self.frameLayoutWidget)
-        self.changePage(3)
+        self.changePage(1)
         #self.disableToolbar() # We don't want them to choose a new page until they've chosen their site
 
     def changePage(self, idx):
