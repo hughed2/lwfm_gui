@@ -32,8 +32,12 @@ class MetaTreeViewWidget(QWidget):
         super().__init__(parent)
 
         # dt4d is the only site with the meta tree view implemented 
-        site = Site.getSiteInstanceFactory("dt4d")
-        self.repoDriver = site.getRepoDriver()
+        try:
+            site = Site.getSiteInstanceFactory("dt4d")
+            self.repoDriver = site.getRepoDriver()
+        except: # DT4D is not available, so don't bother with the widget
+            return
+
 
         layout = QVBoxLayout()
         layout.setSpacing(0)
