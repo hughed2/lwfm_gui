@@ -142,8 +142,10 @@ class TriggerWidget(QWidget):
         
     def updateTable(self, startTimestamp, endTimestamp):
         if self.parent().parent().parent():
-            if self.parent().parent().parent().getSite() is not None:
-                site = self.parent().parent().parent().getSite()
+            site = self.parent().parent().parent().getSite()
+            if site: # Don't continue if we haven't chosen any sites
+                if isinstance(site, list): # If we have a list of sites, only display one at a time--should be changed later, this was just to fix a bug
+                    site = site[0]
                 site = Site.getSiteInstanceFactory(site)
                 runDriver = site.getRunDriver()
                 self.jobList = runDriver.getJobList(startTimestamp, endTimestamp)
